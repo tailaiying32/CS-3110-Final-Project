@@ -1,2 +1,15 @@
 (test
- (name test_final_project))
+ (name http_test)
+ (libraries ounit2 final_project))
+
+(test 
+(name integration_test)
+(libraries ounit2 final_project))
+
+(test 
+(name router_test)
+(libraries ounit2 final_project))
+
+(test 
+(name server_test)
+(libraries ounit2 final_project))
