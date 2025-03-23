@@ -1,7 +1,7 @@
 type request = {
-  host : string;
+  path : string;
   header : string;
   body : string;
 }
 
-let request_of host header body = { host; header; body }
+let request_of path header body = { path; header; body }
