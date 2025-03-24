@@ -7,7 +7,7 @@ type t
 (** [t] is the type representing json objects. *)
 
 exception EmptyJson
-(** [EmptyJson] is the exception to be raised when attempting to index and empty
+(** [EmptyJson] is the exception to be raised when attempting to index an empty
     json object. *)
 
 val keys : t -> string list
