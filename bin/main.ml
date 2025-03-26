@@ -53,10 +53,18 @@ let () =
              ]))
   in
 
+  let router =
+    Router.add router "/cs3110" (fun _ ->
+        Response.response_of 200 "OK"
+          (Headers.t_of "localhost" "text/plain")
+          (Body.t_of_assoc_lst [ ("message", "Welcome to 3110!") ]))
+  in
+
   print_endline "Welcome to the Web Server CLI!";
   print_endline "Available routes:";
   print_endline "  /hello - Get a hello message";
   print_endline "  /time  - Get current time";
+  print_endline "  /cs3110 - Get a welcome message";
   print_newline ();
 
   let rec loop () =
