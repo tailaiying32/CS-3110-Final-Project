@@ -12,23 +12,22 @@ group:
 
 # Your PM.
 pm:
-  name: Wendy Carlos
-  netid: wc39
-# Set to false if you don't want your gallery entry to be public.
+  name: Chhoeng Chau
+  netid: cc2784
+
 publish: true
-# Pithy title
-title: "The Complete Caml Calculator (CCC)"
-# OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
-git-repo: "https://github.com/cs3110/textbook"
-# Replace the URL with your own demo video.
-demo-video-url: "https://www.youtube.com/watch?v=eSBybJGZoCU"
+
+title: "Simple OCaml Server (SOS)"
+
+git-repo: "https://github.com/tailaiying32/CS-3110-Final-Project"
+
+demo-video-url: "YOUTUBE LINK HERE"
 # Write a short, attention-grabbing description of your project.
 desc: >
-  Our project is an interactive calculator. It supports standard mathematical
-  operations like addition, multiplication, negation, and division on both
-  integers and floating-point numbers. The interface is completely
-  programmable--new functions can easily be defined and assigned to new "keys"
-  in the visual interface.
+  Our project is a basic web server. It supports basic request handling for a
+  set of pre-defined requests (TBD). Users will be able to make basic API 
+  requests of text inputs. It will implement basic HTTP protocols and handle
+  HTTP methods with a router.
 
-  Standard visual I/O is supported, but the calculator can also emit sound. By
-  pressing down a special key, it can play a fugue by J.S. Bach.
+  Simple visual support will be provided for inputs, while the format of
+  outputs may vary.
