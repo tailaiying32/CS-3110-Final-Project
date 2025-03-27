@@ -6,5 +6,5 @@ type t = {
 let t_of host content_type = { host; content_type }
 
 let string_of_t headers =
-  Printf.sprintf "===== HOST =====\n%s\n===== CONTENT TYPE =====\n%s\n"
+  Printf.sprintf "===== HEADER =====\nHost : %s\nContent Type : %s\n"
     headers.host headers.content_type
