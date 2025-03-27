@@ -3,10 +3,6 @@
  (libraries ounit2 final_project))
 
 (test 
-(name integration_test)
-(libraries ounit2 final_project))
-
-(test 
 (name router_test)
 (libraries ounit2 final_project))
 
