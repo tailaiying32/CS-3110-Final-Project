@@ -154,33 +154,6 @@ let get_random_port () =
 
 let test_server_lifecycle _ =
   let port = get_random_port () in
-  let config = { port; host = "localhost"; max_connections = 10 } in
-  let server = create config in
-  let handler _ =
-    Response.response_of 200 "OK" (Headers.t_of "" "") (Body.t_of_assoc_lst [])
-  in
-
-  (* Start the server in a separate thread *)
-  let server_thread = start server handler in
-
-  (* Create a timeout to prevent hanging *)
-  let timeout = Lwt_unix.sleep 2.0 >>= fun () -> Lwt.return_unit in
-
-  (* Wait for server to start and verify it's running *)
-  Lwt_unix.sleep 0.1 >>= fun () ->
-  assert_equal true (is_running server);
-
-  (* Stop the server *)
-  stop server >>= fun () ->
-  (* Wait for server to stop and verify it's stopped *)
-  Lwt_unix.sleep 0.1 >>= fun () ->
-  assert_equal false (is_running server);
-
-  (* Wait for either the server thread to complete or timeout *)
-  Lwt.pick [ server_thread; timeout ] >>= fun () -> Lwt.return_unit
-
-let test_server_lifecycle _ =
-  let port = get_random_port () in
   let config = { port; host = "localhost"; max_connections = 1 } in
   let server = create config in
   let handler _req =
