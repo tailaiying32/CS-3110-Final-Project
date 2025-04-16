@@ -29,21 +29,8 @@ let router =
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst [ ("message", "Welcome to 3110!") ]))
 
-let extract_path request_str =
-  try
-    let lines = String.split_on_char '\n' request_str in
-    match lines with
-    | first_line :: _ -> (
-        let parts = String.split_on_char ' ' first_line in
-        match parts with
-        | _ :: path :: _ -> path
-        | _ -> "/")
-    | [] -> "/"
-  with _ -> "/"
-
 let handle_request request =
-  let request_str = Request.string_of_request request in
-  let path = extract_path request_str in
+  let path = Request.url request in
   Router.get_response router path ""
 
 let () =
