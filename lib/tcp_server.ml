@@ -19,8 +19,8 @@ let create config = { config; is_running = false; socket = None }
 let format_method method_str =
   match String.uppercase_ascii method_str with
   | "GET" -> ANSITerminal.sprintf [ ANSITerminal.green ] "%s" method_str
-  | "POST" -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
-  | _ -> ANSITerminal.sprintf [ ANSITerminal.yellow ] "%s" method_str
+  | "POST" -> ANSITerminal.sprintf [ ANSITerminal.yellow ] "%s" method_str
+  | _ -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
 
 let format_status_code code =
   if code >= 200 && code < 300 then
@@ -54,9 +54,17 @@ let read_request client_sock =
     | 0 -> Lwt.return acc
     | n ->
         let chunk = Bytes.sub_string buffer 0 n in
-        read_loop (acc ^ chunk)
+        let new_acc = acc ^ chunk in
+        (* Check if we've received the end of headers (double newline) *)
+        if
+          String.contains new_acc '\n'
+          && (String.contains new_acc '\r' || String.contains new_acc '\n')
+        then Lwt.return new_acc
+        else read_loop new_acc
   in
-  read_loop ""
+  (* Add a timeout to prevent hanging *)
+  Lwt.pick
+    [ read_loop ""; (Lwt_unix.sleep 5.0 >>= fun () -> Lwt.return "TIMEOUT") ]
 
 let write_response client_sock response request =
   let response_str = Response.string_of_response response in
