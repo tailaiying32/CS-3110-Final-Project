@@ -139,6 +139,57 @@ let test_write_response_payload _ =
   assert_equal ~msg:"write_response should send exactly string_of_response" want
     got
 
+let test_format_method _ =
+  (* Test GET method - should be green *)
+  let get_formatted = format_method "GET" in
+  assert_equal ~printer:(fun x -> x) "\027[32mGET\027[0m" get_formatted;
+
+  (* Test POST method - should be yellow *)
+  let post_formatted = format_method "POST" in
+  assert_equal ~printer:(fun x -> x) "\027[33mPOST\027[0m" post_formatted;
+
+  (* Test unknown method - should be red *)
+  let unknown_formatted = format_method "PUT" in
+  assert_equal ~printer:(fun x -> x) "\027[31mPUT\027[0m" unknown_formatted;
+
+  (* Test case insensitivity *)
+  let get_lower_formatted = format_method "get" in
+  assert_equal ~printer:(fun x -> x) "\027[32mget\027[0m" get_lower_formatted
+
+let test_format_status_code _ =
+  (* Test 2xx status codes - should be green *)
+  let success_codes = [ 200; 201; 299 ] in
+  List.iter
+    (fun code ->
+      let formatted = format_status_code code in
+      assert_equal
+        ~printer:(fun x -> x)
+        (Printf.sprintf "\027[32m%d\027[0m" code)
+        formatted)
+    success_codes;
+
+  (* Test 4xx and 5xx status codes - should be red *)
+  let error_codes = [ 400; 404; 500; 503 ] in
+  List.iter
+    (fun code ->
+      let formatted = format_status_code code in
+      assert_equal
+        ~printer:(fun x -> x)
+        (Printf.sprintf "\027[31m%d\027[0m" code)
+        formatted)
+    error_codes;
+
+  (* Test other status codes - should be yellow *)
+  let other_codes = [ 100; 300; 301; 302 ] in
+  List.iter
+    (fun code ->
+      let formatted = format_status_code code in
+      assert_equal
+        ~printer:(fun x -> x)
+        (Printf.sprintf "\027[33m%d\027[0m" code)
+        formatted)
+    other_codes
+
 let get_random_port () =
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
@@ -201,7 +252,33 @@ let test_stop_without_start _ =
   Lwt_main.run (stop srv);
   assert_bool "stop should leave is_running = false" (not (is_running srv))
 
-let server_creation_tests = [ "test_create_server" >:: test_create_server ]
+let test_port_validation _ =
+  (* Test valid port numbers *)
+  let valid_ports = [ 0; 1; 8080; 65535 ] in
+  List.iter
+    (fun port ->
+      let config = { port; host = "localhost"; max_connections = 1 } in
+      let server = create config in
+      assert_equal port (get_config server).port)
+    valid_ports;
+
+  (* Test invalid port numbers *)
+  let invalid_ports = [ -1; -100; 65536; 100000 ] in
+  List.iter
+    (fun port ->
+      let config = { port; host = "localhost"; max_connections = 1 } in
+      let server = create config in
+      assert_raises (Invalid_argument "port must be 0-65535") (fun () ->
+          Lwt_main.run
+            (start server (fun _ ->
+                 assert_failure "handler should not be invoked"))))
+    invalid_ports
+
+let server_creation_tests =
+  [
+    "test_create_server" >:: test_create_server;
+    "test_port_validation" >:: test_port_validation;
+  ]
 
 let request_parsing_tests =
   [
@@ -221,7 +298,11 @@ let request_reading_tests =
   ]
 
 let response_tests =
-  [ "test_write_response_payload" >:: test_write_response_payload ]
+  [
+    "test_write_response_payload" >:: test_write_response_payload;
+    "test_format_method" >:: test_format_method;
+    "test_format_status_code" >:: test_format_status_code;
+  ]
 
 let server_lifecycle_tests =
   [

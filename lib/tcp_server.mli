@@ -38,3 +38,9 @@ val is_running : t -> bool
 
 val get_config : t -> config
 (** [get_config server] returns the current configuration of the server *)
+
+val format_method : string -> string
+(** [format_method method_str] formats a method string with color codes *)
+
+val format_status_code : int -> string
+(** [format_status_code code] formats a status code with color codes *)
