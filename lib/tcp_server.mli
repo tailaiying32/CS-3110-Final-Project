@@ -11,6 +11,10 @@ type config = {
 val create : config -> t
 (** [create config] creates a new TCP server with the given configuration *)
 
+val parse_request : string -> Request.request
+(** [parse_request request_str] parses a raw HTTP request string into a
+    Request.t *)
+
 val start : t -> (Request.request -> Response.response) -> unit Lwt.t
 (** [start server handler] starts the server and uses [handler] to process
     incoming requests. The handler function takes a request and returns a
