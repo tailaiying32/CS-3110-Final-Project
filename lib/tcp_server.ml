@@ -33,17 +33,13 @@ let format_status_code code =
 let parse_request request_str =
   (* Just extract method and path from the first line *)
   let lines = String.split_on_char '\n' request_str in
-  match lines with
-  | first_line :: _ -> (
-      let parts = String.split_on_char ' ' first_line in
-      match parts with
-      | method_str :: path :: _ ->
-          Request.request_of method_str path (Headers.t_of "" "")
-            (Body.t_of_assoc_lst [])
-      | _ ->
-          Request.request_of "UNKNOWN" "/" (Headers.t_of "" "")
-            (Body.t_of_assoc_lst []))
-  | [] ->
+  let first_line = List.hd lines in
+  let parts = String.split_on_char ' ' first_line in
+  match parts with
+  | method_str :: path :: _ ->
+      Request.request_of method_str path (Headers.t_of "" "")
+        (Body.t_of_assoc_lst [])
+  | _ ->
       Request.request_of "UNKNOWN" "/" (Headers.t_of "" "")
         (Body.t_of_assoc_lst [])
 
