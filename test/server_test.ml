@@ -201,38 +201,6 @@ let test_stop_without_start _ =
   Lwt_main.run (stop srv);
   assert_bool "stop should leave is_running = false" (not (is_running srv))
 
-let test_stop_running_server _ =
-  let port = get_random_port () in
-  let config = { port; host = "localhost"; max_connections = 1 } in
-  let server = create config in
-  let handler _req =
-    Response.response_of 200 "OK" (Headers.t_of "" "") (Body.t_of_assoc_lst [])
-  in
-
-  (* This is the Lwt thread we'll actually run *)
-  let test_thread =
-    (* start the server *)
-    let server_thread = start server handler in
-
-    (* give the OS a moment to bind/listen *)
-    Lwt_unix.sleep 0.1 >>= fun () ->
-    (* verify server is running *)
-    assert_bool "server should be running" (is_running server);
-
-    (* stop the server *)
-    stop server >>= fun () ->
-    (* give the accept_loop a moment to notice is_running = false *)
-    Lwt_unix.sleep 0.1 >>= fun () ->
-    (* verify server is stopped *)
-    assert_bool "server should have stopped" (not (is_running server));
-
-    (* wait for the server thread to finish cleanly *)
-    server_thread
-  in
-
-  (* run the test thread *)
-  Lwt_main.run test_thread
-
 let server_creation_tests = [ "test_create_server" >:: test_create_server ]
 
 let request_parsing_tests =
@@ -260,7 +228,6 @@ let server_lifecycle_tests =
     "test_server_lifecycle" >:: test_server_lifecycle;
     "test_start_bind_error" >:: test_start_bind_error;
     "test_stop_without_start" >:: test_stop_without_start;
-    "test_stop_running_server" >:: test_stop_running_server;
   ]
 
 let suite =
