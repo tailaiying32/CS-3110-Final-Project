@@ -179,29 +179,48 @@ let test_server_lifecycle _ =
   (* Wait for either the server thread to complete or timeout *)
   Lwt.pick [ server_thread; timeout ] >>= fun () -> Lwt.return_unit
 
+let server_creation_tests = [ "test_create_server" >:: test_create_server ]
+
+let request_parsing_tests =
+  [
+    "test_parse_request" >:: test_parse_request;
+    "test_parse_malformed_request" >:: test_parse_malformed_request;
+    "test_parse_empty_request" >:: test_parse_empty_request;
+    "test_parse_incomplete_request" >:: test_parse_incomplete_request;
+    "test_parse_post_request" >:: test_parse_post_request;
+  ]
+
+let request_reading_tests =
+  [
+    "test_read_request_single_chunk" >:: test_read_request_single_chunk;
+    "test_read_request_multiple_chunks" >:: test_read_request_multiple_chunks;
+    "test_read_request_eof" >:: test_read_request_eof;
+    "test_read_request_partial_then_eof" >:: test_read_request_partial_then_eof;
+  ]
+
+let response_tests =
+  [ "test_write_response_payload" >:: test_write_response_payload ]
+
+let server_lifecycle_tests =
+  [
+    ( "test_server_lifecycle" >:: fun ctx ->
+      try Lwt_main.run (test_server_lifecycle ctx) with
+      | Unix.Unix_error (err, func, arg) ->
+          failwith
+            (Printf.sprintf "Unix error in %s: %s (%s)" func
+               (Unix.error_message err) arg)
+      | exn -> failwith (Printexc.to_string exn) );
+  ]
+
 let suite =
   "TCP Server Test Suite"
-  >::: [
-         "test_create_server" >:: test_create_server;
-         "test_parse_request" >:: test_parse_request;
-         "test_parse_malformed_request" >:: test_parse_malformed_request;
-         "test_parse_empty_request" >:: test_parse_empty_request;
-         "test_parse_incomplete_request" >:: test_parse_incomplete_request;
-         "test_parse_post_request" >:: test_parse_post_request;
-         "test_read_request_single_chunk" >:: test_read_request_single_chunk;
-         "test_read_request_multiple_chunks"
-         >:: test_read_request_multiple_chunks;
-         "test_read_request_eof" >:: test_read_request_eof;
-         "test_read_request_partial_then_eof"
-         >:: test_read_request_partial_then_eof;
-         "test_write_response_payload" >:: test_write_response_payload;
-         ( "test_server_lifecycle" >:: fun ctx ->
-           try Lwt_main.run (test_server_lifecycle ctx) with
-           | Unix.Unix_error (err, func, arg) ->
-               failwith
-                 (Printf.sprintf "Unix error in %s: %s (%s)" func
-                    (Unix.error_message err) arg)
-           | exn -> failwith (Printexc.to_string exn) );
-       ]
+  >::: List.flatten
+         [
+           server_creation_tests;
+           request_parsing_tests;
+           request_reading_tests;
+           response_tests;
+           server_lifecycle_tests;
+         ]
 
 let () = run_test_tt_main suite
