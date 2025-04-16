@@ -1,4 +1,5 @@
 open Lwt
+open ANSITerminal
 
 type config = {
   port : int;
@@ -14,6 +15,38 @@ type t = {
 
 let create config = { config; is_running = false; socket = None }
 
+(* Color formatting functions *)
+let format_method method_str =
+  match String.uppercase_ascii method_str with
+  | "GET" -> ANSITerminal.sprintf [ ANSITerminal.green ] "%s" method_str
+  | "POST" -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
+  | _ -> ANSITerminal.sprintf [ ANSITerminal.yellow ] "%s" method_str
+
+let format_status_code code =
+  if code >= 200 && code < 300 then
+    ANSITerminal.sprintf [ ANSITerminal.green ] "%d" code
+  else if code >= 400 && code < 600 then
+    ANSITerminal.sprintf [ ANSITerminal.red ] "%d" code
+  else ANSITerminal.sprintf [ ANSITerminal.yellow ] "%d" code
+
+(* Simplified request parsing function *)
+let parse_request request_str =
+  (* Just extract method and path from the first line *)
+  let lines = String.split_on_char '\n' request_str in
+  match lines with
+  | first_line :: _ -> (
+      let parts = String.split_on_char ' ' first_line in
+      match parts with
+      | method_str :: path :: _ ->
+          Request.request_of method_str path (Headers.t_of "" "")
+            (Body.t_of_assoc_lst [])
+      | _ ->
+          Request.request_of "UNKNOWN" "/" (Headers.t_of "" "")
+            (Body.t_of_assoc_lst []))
+  | [] ->
+      Request.request_of "UNKNOWN" "/" (Headers.t_of "" "")
+        (Body.t_of_assoc_lst [])
+
 let read_request client_sock =
   let buffer = Bytes.create 4096 in
   let rec read_loop acc =
@@ -25,8 +58,14 @@ let read_request client_sock =
   in
   read_loop ""
 
-let write_response client_sock response =
+let write_response client_sock response request =
   let response_str = Response.string_of_response response in
+
+  (* Log the outgoing response with colorized status code *)
+  let status = Response.status_code response in
+  let colored_status = format_status_code status in
+  Printf.printf "--> %s %s\n%!" colored_status (Request.url request);
+
   Lwt_unix.write client_sock
     (Bytes.of_string response_str)
     0
@@ -50,12 +89,15 @@ let start server handler =
       Lwt_unix.accept sock >>= fun (client_sock, _) ->
       Lwt.async (fun () ->
           read_request client_sock >>= fun request_str ->
-          let request =
-            Request.request_of "GET" "/" (Headers.t_of "" "")
-              (Body.t_of_assoc_lst [])
-          in
+          let request = parse_request request_str in
+
+          (* Log the incoming request with colorized method *)
+          let method_str = Request.request_method request in
+          let colored_method = format_method method_str in
+          Printf.printf "<-- %s %s\n%!" colored_method (Request.url request);
+
           let response = handler request in
-          write_response client_sock response >>= fun () ->
+          write_response client_sock response request >>= fun () ->
           Lwt_unix.close client_sock);
       accept_loop ()
   in
