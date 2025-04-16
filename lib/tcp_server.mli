@@ -15,6 +15,10 @@ val parse_request : string -> Request.request
 (** [parse_request request_str] parses a raw HTTP request string into a
     Request.t *)
 
+val read_request : Lwt_unix.file_descr -> string Lwt.t
+(** [read_request client_sock] reads a complete HTTP request from the client
+    socket. Returns a string containing the raw request data. *)
+
 val start : t -> (Request.request -> Response.response) -> unit Lwt.t
 (** [start server handler] starts the server and uses [handler] to process
     incoming requests. The handler function takes a request and returns a
