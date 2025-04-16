@@ -94,7 +94,7 @@ let test_read_request_multiple_chunks _ =
 
 let test_read_request_eof _ =
   (* If the client half of the socketpair is closed immediately, Lwt_unix.read
-     will return 0 and we’ll hit the 0‑case. *)
+     will return 0 and we'll hit the 0‑case. *)
   let fd_read, fd_write = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
   Unix.close fd_write;
   let client_sock = Lwt_unix.of_unix_file_descr fd_read in
@@ -179,6 +179,55 @@ let test_server_lifecycle _ =
   (* Wait for either the server thread to complete or timeout *)
   Lwt.pick [ server_thread; timeout ] >>= fun () -> Lwt.return_unit
 
+let test_server_lifecycle _ =
+  let port = get_random_port () in
+  let config = { port; host = "localhost"; max_connections = 1 } in
+  let server = create config in
+  let handler _req =
+    Response.response_of 200 "OK" (Headers.t_of "" "") (Body.t_of_assoc_lst [])
+  in
+
+  (* This is the Lwt thread we'll actually run *)
+  let test_thread =
+    (* start the server; returns a thread that resolves once accept_loop
+       exits *)
+    let server_thread = start server handler in
+
+    (* give the OS a moment to bind/listen *)
+    Lwt_unix.sleep 0.1 >>= fun () ->
+    (* now it should be flagged as running *)
+    assert_bool "server should be running" (is_running server);
+
+    (* shut it down *)
+    stop server >>= fun () ->
+    (* give the accept_loop a moment to notice is_running = false *)
+    Lwt_unix.sleep 0.1 >>= fun () ->
+    assert_bool "server should have stopped" (not (is_running server));
+
+    (* finally wait for the server thread to finish cleanly *)
+    server_thread
+  in
+
+  (* run *that* whole thing under one Lwt_main.run *)
+  Lwt_main.run test_thread
+
+let test_start_bind_error _ =
+  let bad_cfg = { port = -1; host = "localhost"; max_connections = 1 } in
+  let srv = create bad_cfg in
+  let handler _ = assert_failure "handler should not be invoked" in
+
+  assert_raises (Invalid_argument "port must be 0-65535") (fun () ->
+      Lwt_main.run (start srv handler))
+
+let test_stop_without_start _ =
+  let cfg =
+    { port = get_random_port (); host = "localhost"; max_connections = 1 }
+  in
+  let srv = create cfg in
+  (* srv.socket = None and is_running = false *)
+  Lwt_main.run (stop srv);
+  assert_bool "stop should leave is_running = false" (not (is_running srv))
+
 let server_creation_tests = [ "test_create_server" >:: test_create_server ]
 
 let request_parsing_tests =
@@ -203,13 +252,9 @@ let response_tests =
 
 let server_lifecycle_tests =
   [
-    ( "test_server_lifecycle" >:: fun ctx ->
-      try Lwt_main.run (test_server_lifecycle ctx) with
-      | Unix.Unix_error (err, func, arg) ->
-          failwith
-            (Printf.sprintf "Unix error in %s: %s (%s)" func
-               (Unix.error_message err) arg)
-      | exn -> failwith (Printexc.to_string exn) );
+    "test_server_lifecycle" >:: test_server_lifecycle;
+    "test_start_bind_error" >:: test_start_bind_error;
+    "test_stop_without_start" >:: test_stop_without_start;
   ]
 
 let suite =
