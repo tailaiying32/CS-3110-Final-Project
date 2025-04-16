@@ -14,6 +14,25 @@ type t = {
 
 let create config = { config; is_running = false; socket = None }
 
+let read_request client_sock =
+  let buffer = Bytes.create 4096 in
+  let rec read_loop acc =
+    Lwt_unix.read client_sock buffer 0 4096 >>= function
+    | 0 -> Lwt.return acc
+    | n ->
+        let chunk = Bytes.sub_string buffer 0 n in
+        read_loop (acc ^ chunk)
+  in
+  read_loop ""
+
+let write_response client_sock response =
+  let response_str = Response.string_of_response response in
+  Lwt_unix.write client_sock
+    (Bytes.of_string response_str)
+    0
+    (String.length response_str)
+  >>= fun _ -> Lwt.return_unit
+
 let start server handler =
   let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Lwt_unix.setsockopt sock Unix.SO_REUSEADDR true;
@@ -30,7 +49,14 @@ let start server handler =
     else
       Lwt_unix.accept sock >>= fun (client_sock, _) ->
       Lwt.async (fun () ->
-          handler client_sock >>= fun () -> Lwt_unix.close client_sock);
+          read_request client_sock >>= fun request_str ->
+          let request =
+            Request.request_of "GET" "/" (Headers.t_of "" "")
+              (Body.t_of_assoc_lst [])
+          in
+          let response = handler request in
+          write_response client_sock response >>= fun () ->
+          Lwt_unix.close client_sock);
       accept_loop ()
   in
   accept_loop ()
