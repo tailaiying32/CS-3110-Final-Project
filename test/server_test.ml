@@ -18,6 +18,40 @@ let test_parse_request _ =
   assert_equal "GET" (Request.request_method request);
   assert_equal "/test" (Request.url request)
 
+let test_parse_malformed_request _ =
+  (* Test request with just a method - should be treated as malformed *)
+  let malformed_str = "GET\r\nHost: localhost\r\n\r\n" in
+  let request = parse_request malformed_str in
+  assert_equal "UNKNOWN" (Request.request_method request);
+  assert_equal "/" (Request.url request);
+
+  (* Test request with empty first line - should be treated as malformed *)
+  let empty_first_line = "\r\nHost: localhost\r\n\r\n" in
+  let request2 = parse_request empty_first_line in
+  assert_equal "UNKNOWN" (Request.request_method request2);
+  assert_equal "/" (Request.url request2);
+
+  (* Test request with too many parts - should still parse first two parts
+     correctly *)
+  let extra_parts = "GET /test HTTP/1.1 extra\r\nHost: localhost\r\n\r\n" in
+  let request3 = parse_request extra_parts in
+  assert_equal "GET" (Request.request_method request3);
+  assert_equal "/test" (Request.url request3)
+
+let test_parse_empty_request _ =
+  (* Test empty request *)
+  let empty_str = "" in
+  let request = parse_request empty_str in
+  assert_equal "UNKNOWN" (Request.request_method request);
+  assert_equal "/" (Request.url request)
+
+let test_parse_incomplete_request _ =
+  (* Test request with missing parts *)
+  let incomplete_str = "GET" in
+  let request = parse_request incomplete_str in
+  assert_equal "UNKNOWN" (Request.request_method request);
+  assert_equal "/" (Request.url request)
+
 let get_random_port () =
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
@@ -63,6 +97,9 @@ let suite =
   >::: [
          "test_create_server" >:: test_create_server;
          "test_parse_request" >:: test_parse_request;
+         "test_parse_malformed_request" >:: test_parse_malformed_request;
+         "test_parse_empty_request" >:: test_parse_empty_request;
+         "test_parse_incomplete_request" >:: test_parse_incomplete_request;
          ( "test_server_lifecycle" >:: fun ctx ->
            try Lwt_main.run (test_server_lifecycle ctx) with
            | Unix.Unix_error (err, func, arg) ->
