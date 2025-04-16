@@ -2,4 +2,4 @@
  (name final_project)
  (preprocess
   (pps lwt_ppx))
- (libraries lwt.unix))
+ (libraries lwt.unix ANSITerminal))
