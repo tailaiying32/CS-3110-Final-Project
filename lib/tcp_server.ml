@@ -46,21 +46,13 @@ let parse_request request_str =
 let read_request client_sock =
   let buffer = Bytes.create 4096 in
   let rec read_loop acc =
-    Lwt_unix.read client_sock buffer 0 4096 >>= function
+    Lwt_unix.read client_sock buffer 0 (Bytes.length buffer) >>= function
     | 0 -> Lwt.return acc
     | n ->
-        let chunk = Bytes.sub_string buffer 0 n in
-        let new_acc = acc ^ chunk in
-        (* Check if we've received the end of headers (double newline) *)
-        if
-          String.contains new_acc '\n'
-          && (String.contains new_acc '\r' || String.contains new_acc '\n')
-        then Lwt.return new_acc
-        else read_loop new_acc
+        let acc = acc ^ Bytes.sub_string buffer 0 n in
+        if String.contains acc '\n' then Lwt.return acc else read_loop acc
   in
-  (* Add a timeout to prevent hanging *)
-  Lwt.pick
-    [ read_loop ""; (Lwt_unix.sleep 5.0 >>= fun () -> Lwt.return "TIMEOUT") ]
+  read_loop ""
 
 let write_response client_sock response request =
   let response_str = Response.string_of_response response in
