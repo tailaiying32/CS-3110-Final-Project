@@ -52,6 +52,58 @@ let test_parse_incomplete_request _ =
   assert_equal "UNKNOWN" (Request.request_method request);
   assert_equal "/" (Request.url request)
 
+let test_parse_post_request _ =
+  (* Even though parse_request ignores headers & body, it should still correctly
+     pull out the method and path. *)
+  let request_str = "POST /submit HTTP/1.0\r\nContent-Length: 5\r\n\r\nhello" in
+  let request = parse_request request_str in
+  assert_equal "POST" (Request.request_method request);
+  assert_equal "/submit" (Request.url request)
+
+let test_read_request_single_chunk _ =
+  (* Create a pair of connected UNIX-domain sockets *)
+  let fd_read, fd_write = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  let client_sock = Lwt_unix.of_unix_file_descr fd_read in
+  let raw = "GET / HTTP/1.1\r\nHost: test\r\n\r\n" in
+  (* Write the entire request in one go *)
+  let _ = Unix.write fd_write (Bytes.of_string raw) 0 (String.length raw) in
+  (* read_request should return the full string in one shot *)
+  let got = Lwt_main.run (read_request client_sock) in
+  assert_equal ~msg:"single‑chunk read_request" raw got
+
+let test_read_request_multiple_chunks _ =
+  let fd_read, fd_write = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  let client_sock = Lwt_unix.of_unix_file_descr fd_read in
+  let part1 = "GET /multi" in
+  let part2 = "part HTTP/1.1\r\nHost: test\r\n\r\n" in
+  (* Simulate two separate TCP fragments *)
+  let _ = Unix.write fd_write (Bytes.of_string part1) 0 (String.length part1) in
+  let _ = Unix.write fd_write (Bytes.of_string part2) 0 (String.length part2) in
+  let got = Lwt_main.run (read_request client_sock) in
+  assert_equal ~msg:"multi‑chunk read_request" (part1 ^ part2) got
+
+let test_read_request_eof _ =
+  (* If the client half of the socketpair is closed immediately, Lwt_unix.read
+     will return 0 and we’ll hit the 0‑case. *)
+  let fd_read, fd_write = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  Unix.close fd_write;
+  let client_sock = Lwt_unix.of_unix_file_descr fd_read in
+  let got = Lwt_main.run (read_request client_sock) in
+  assert_equal ~msg:"EOF returns empty acc" "" got
+
+let test_read_request_partial_then_eof _ =
+  (* Write a chunk without any newline, then close; we should get exactly that
+     chunk back when EOF is seen. *)
+  let fd_read, fd_write = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  let client_sock = Lwt_unix.of_unix_file_descr fd_read in
+  let partial = "HELLO-WITH-NO-NEWLINE" in
+  ignore
+    (Unix.write fd_write (Bytes.of_string partial) 0 (String.length partial));
+  Unix.close fd_write;
+  let got = Lwt_main.run (read_request client_sock) in
+  assert_equal ~msg:"partial then EOF should return exactly the data" partial
+    got
+
 let get_random_port () =
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
@@ -100,6 +152,13 @@ let suite =
          "test_parse_malformed_request" >:: test_parse_malformed_request;
          "test_parse_empty_request" >:: test_parse_empty_request;
          "test_parse_incomplete_request" >:: test_parse_incomplete_request;
+         "test_parse_post_request" >:: test_parse_post_request;
+         "test_read_request_single_chunk" >:: test_read_request_single_chunk;
+         "test_read_request_multiple_chunks"
+         >:: test_read_request_multiple_chunks;
+         "test_read_request_eof" >:: test_read_request_eof;
+         "test_read_request_partial_then_eof"
+         >:: test_read_request_partial_then_eof;
          ( "test_server_lifecycle" >:: fun ctx ->
            try Lwt_main.run (test_server_lifecycle ctx) with
            | Unix.Unix_error (err, func, arg) ->
