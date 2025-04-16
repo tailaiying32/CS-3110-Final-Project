@@ -3,6 +3,16 @@ open Lwt
 open Final_project
 open Tcp_server
 
+let socketpair () =
+  let r, w = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  (Lwt_unix.of_unix_file_descr w, r)
+
+let read_all fd =
+  let buf = Bytes.create 4096 in
+  (* read once should be enough here, most responses <4K *)
+  let n = Unix.read fd buf 0 (Bytes.length buf) in
+  Bytes.sub_string buf 0 n
+
 let test_create_server _ =
   let config = { port = 8080; host = "localhost"; max_connections = 10 } in
   let server = create config in
@@ -104,6 +114,31 @@ let test_read_request_partial_then_eof _ =
   assert_equal ~msg:"partial then EOF should return exactly the data" partial
     got
 
+let test_write_response_payload _ =
+  (* set up a pair; server_sock is where write_response writes *)
+  let server_sock, client_fd = socketpair () in
+
+  (* build a minimal response: status 200, body "OK" *)
+  let response =
+    Response.response_of 200 "OK" (Headers.t_of "" "") (Body.t_of_assoc_lst [])
+  in
+
+  (* dummy request to exercise the logging format_status_code path *)
+  let request =
+    Request.request_of "GET" "/foo" (Headers.t_of "" "")
+      (Body.t_of_assoc_lst [])
+  in
+
+  (* fire it off *)
+  Lwt_main.run (write_response server_sock response request);
+
+  (* read back what was sent *)
+  let got = read_all client_fd in
+  let want = Response.string_of_response response in
+
+  assert_equal ~msg:"write_response should send exactly string_of_response" want
+    got
+
 let get_random_port () =
   let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt sock Unix.SO_REUSEADDR true;
@@ -159,6 +194,7 @@ let suite =
          "test_read_request_eof" >:: test_read_request_eof;
          "test_read_request_partial_then_eof"
          >:: test_read_request_partial_then_eof;
+         "test_write_response_payload" >:: test_write_response_payload;
          ( "test_server_lifecycle" >:: fun ctx ->
            try Lwt_main.run (test_server_lifecycle ctx) with
            | Unix.Unix_error (err, func, arg) ->
