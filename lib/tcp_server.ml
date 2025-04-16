@@ -1,5 +1,6 @@
 open Lwt
 open ANSITerminal
+open Lwt.Infix
 
 type config = {
   port : int;
@@ -68,59 +69,60 @@ let write_response client_sock response request =
     (String.length response_str)
   >>= fun _ -> Lwt.return_unit
 
+(* Helper for safe socket operations with proper error handling *)
+let handle_socket_error f =
+  Lwt.catch f (function
+    | Unix.Unix_error (Unix.EBADF, _, _) -> Lwt.return_unit
+    | exn -> Lwt.fail exn)
+
+(* Extract connection handling to make the main loop cleaner *)
+let handle_connection handler client =
+  Lwt.finalize
+    (fun () ->
+      let%lwt req_s = read_request client in
+      let req = parse_request req_s in
+      (* Log request *)
+      let m = Request.request_method req and u = Request.url req in
+      Printf.printf "<-- %s %s\n%!" (format_method m) u;
+      let resp = handler req in
+      write_response client resp req)
+    (fun () -> Lwt_unix.close client)
+
 let start server handler =
+  (* 1) Guard the port synchronously *)
+  if server.config.port < 0 || server.config.port > 65_535 then
+    invalid_arg "port must be 0-65535";
+
+  (* 2) Set up and listen *)
   let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Lwt_unix.setsockopt sock Unix.SO_REUSEADDR true;
   let addr = Unix.ADDR_INET (Unix.inet_addr_any, server.config.port) in
-  Lwt.catch
-    (fun () ->
-      Lwt_unix.bind sock addr >>= fun () ->
-      Lwt_unix.listen sock server.config.max_connections;
-      server.socket <- Some sock;
-      server.is_running <- true;
-      Printf.printf "Server listening on port %d\n%!" server.config.port;
+  Lwt_unix.bind sock addr >>= fun () ->
+  Lwt_unix.listen sock server.config.max_connections;
 
-      let rec accept_loop () =
-        if not server.is_running then Lwt.return_unit
-        else
-          Lwt.catch
-            (fun () ->
-              Lwt_unix.accept sock >>= fun (client_sock, _) ->
-              Lwt.async (fun () ->
-                  Lwt.catch
-                    (fun () ->
-                      read_request client_sock >>= fun request_str ->
-                      let request = parse_request request_str in
+  (* Update server state *)
+  server.socket <- Some sock;
+  server.is_running <- true;
+  Printf.printf "Server listening on port %d\n%!" server.config.port;
 
-                      (* Log the incoming request with colorized method *)
-                      let method_str = Request.request_method request in
-                      let colored_method = format_method method_str in
-                      Printf.printf "<-- %s %s\n%!" colored_method
-                        (Request.url request);
-
-                      let response = handler request in
-                      write_response client_sock response request >>= fun () ->
-                      Lwt_unix.close client_sock)
-                    (fun _ -> Lwt_unix.close client_sock));
-              accept_loop ())
-            (fun _ -> accept_loop ())
-      in
-      accept_loop ())
-    (fun exn -> Lwt_unix.close sock >>= fun () -> Lwt.fail exn)
+  (* 3) Main connection acceptance loop *)
+  let rec accept_loop () =
+    handle_socket_error (fun () ->
+        Lwt_unix.accept sock >>= fun (client, _) ->
+        Lwt.async (fun () -> handle_connection handler client);
+        accept_loop ())
+  in
+  accept_loop ()
 
 let stop server =
   match server.socket with
   | None -> Lwt.return_unit
-  | Some sock -> (
+  | Some sock ->
+      (* Update server state *)
       server.is_running <- false;
       server.socket <- None;
       Printf.printf "Server shutting down\n%!";
-      try
-        (* For a listening socket, we just need to close it *)
-        Lwt_unix.close sock
-      with
-      | Unix.Unix_error (Unix.EBADF, _, _) -> Lwt.return_unit
-      | exn -> Lwt.fail exn)
+      handle_socket_error (fun () -> Lwt_unix.close sock)
 
 let is_running server = server.is_running
 let get_config server = server.config
