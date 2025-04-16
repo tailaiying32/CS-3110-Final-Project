@@ -84,41 +84,55 @@ let start server handler =
   let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Lwt_unix.setsockopt sock Unix.SO_REUSEADDR true;
   let addr = Unix.ADDR_INET (Unix.inet_addr_any, server.config.port) in
-  Lwt_unix.bind sock addr >>= fun () ->
-  Lwt_unix.listen sock server.config.max_connections;
-  server.socket <- Some sock;
-  server.is_running <- true;
+  Lwt.catch
+    (fun () ->
+      Lwt_unix.bind sock addr >>= fun () ->
+      Lwt_unix.listen sock server.config.max_connections;
+      server.socket <- Some sock;
+      server.is_running <- true;
+      Printf.printf "Server listening on port %d\n%!" server.config.port;
 
-  Printf.printf "Server listening on port %d\n%!" server.config.port;
+      let rec accept_loop () =
+        if not server.is_running then Lwt.return_unit
+        else
+          Lwt.catch
+            (fun () ->
+              Lwt_unix.accept sock >>= fun (client_sock, _) ->
+              Lwt.async (fun () ->
+                  Lwt.catch
+                    (fun () ->
+                      read_request client_sock >>= fun request_str ->
+                      let request = parse_request request_str in
 
-  let rec accept_loop () =
-    if not server.is_running then Lwt.return_unit
-    else
-      Lwt_unix.accept sock >>= fun (client_sock, _) ->
-      Lwt.async (fun () ->
-          read_request client_sock >>= fun request_str ->
-          let request = parse_request request_str in
+                      (* Log the incoming request with colorized method *)
+                      let method_str = Request.request_method request in
+                      let colored_method = format_method method_str in
+                      Printf.printf "<-- %s %s\n%!" colored_method
+                        (Request.url request);
 
-          (* Log the incoming request with colorized method *)
-          let method_str = Request.request_method request in
-          let colored_method = format_method method_str in
-          Printf.printf "<-- %s %s\n%!" colored_method (Request.url request);
-
-          let response = handler request in
-          write_response client_sock response request >>= fun () ->
-          Lwt_unix.close client_sock);
-      accept_loop ()
-  in
-  accept_loop ()
+                      let response = handler request in
+                      write_response client_sock response request >>= fun () ->
+                      Lwt_unix.close client_sock)
+                    (fun _ -> Lwt_unix.close client_sock));
+              accept_loop ())
+            (fun _ -> accept_loop ())
+      in
+      accept_loop ())
+    (fun exn -> Lwt_unix.close sock >>= fun () -> Lwt.fail exn)
 
 let stop server =
   match server.socket with
   | None -> Lwt.return_unit
-  | Some sock ->
+  | Some sock -> (
       server.is_running <- false;
       server.socket <- None;
       Printf.printf "Server shutting down\n%!";
-      Lwt_unix.close sock
+      try
+        (* For a listening socket, we just need to close it *)
+        Lwt_unix.close sock
+      with
+      | Unix.Unix_error (Unix.EBADF, _, _) -> Lwt.return_unit
+      | exn -> Lwt.fail exn)
 
 let is_running server = server.is_running
 let get_config server = server.config
