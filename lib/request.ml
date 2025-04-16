@@ -5,6 +5,11 @@ type request = {
   body : Body.t;
 }
 
+let request_method request = request.request_method
+let url request = request.url
+let headers request = request.headers
+let body request = request.body
+
 let request_of request_method url headers body =
   { request_method; url; headers; body }
 
