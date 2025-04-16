@@ -1,2 +1,7 @@
 (library
- (name final_project))
+ (name final_project)
+ (preprocess
+  (pps lwt_ppx))
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries lwt.unix ANSITerminal))
