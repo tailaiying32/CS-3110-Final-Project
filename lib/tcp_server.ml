@@ -105,12 +105,14 @@ let start server handler =
   server.is_running <- true;
   Printf.printf "Server listening on port %d\n%!" server.config.port;
 
-  (* 3) Main connection acceptance loop *)
+  (* 3) Main connection acceptance loop - CHECK is_running BEFORE accepting *)
   let rec accept_loop () =
-    handle_socket_error (fun () ->
-        Lwt_unix.accept sock >>= fun (client, _) ->
-        Lwt.async (fun () -> handle_connection handler client);
-        accept_loop ())
+    if not server.is_running then Lwt.return_unit
+    else
+      handle_socket_error (fun () ->
+          Lwt_unix.accept sock >>= fun (client, _) ->
+          Lwt.async (fun () -> handle_connection handler client);
+          accept_loop ())
   in
   accept_loop ()
 
@@ -118,11 +120,17 @@ let stop server =
   match server.socket with
   | None -> Lwt.return_unit
   | Some sock ->
-      (* Update server state *)
+      (* Update server state FIRST to stop the accept loop *)
       server.is_running <- false;
-      server.socket <- None;
+
+      (* Then close the socket - IMPORTANT: Keep a reference to sock *)
       Printf.printf "Server shutting down\n%!";
-      handle_socket_error (fun () -> Lwt_unix.close sock)
+      let close_promise = handle_socket_error (fun () -> Lwt_unix.close sock) in
+
+      (* Only set socket to None AFTER closing completes *)
+      close_promise >>= fun () ->
+      server.socket <- None;
+      Lwt.return_unit
 
 let is_running server = server.is_running
 let get_config server = server.config
