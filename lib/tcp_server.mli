@@ -16,7 +16,7 @@ val start : t -> (Request.request -> Response.response) -> unit Lwt.t
     incoming requests. The handler function takes a request and returns a
     response. *)
 
-val stop : t -> unit
+val stop : t -> unit Lwt.t
 (** [stop server] gracefully stops the server and closes all connections *)
 
 val is_running : t -> bool
