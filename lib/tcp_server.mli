@@ -19,6 +19,12 @@ val read_request : Lwt_unix.file_descr -> string Lwt.t
 (** [read_request client_sock] reads a complete HTTP request from the client
     socket. Returns a string containing the raw request data. *)
 
+val write_response :
+  Lwt_unix.file_descr -> Response.response -> Request.request -> unit Lwt.t
+(** [write_response client_sock response request] writes a response to the
+    client socket. The response and request are used to log the outgoing
+    response with colorized status code. *)
+
 val start : t -> (Request.request -> Response.response) -> unit Lwt.t
 (** [start server handler] starts the server and uses [handler] to process
     incoming requests. The handler function takes a request and returns a
