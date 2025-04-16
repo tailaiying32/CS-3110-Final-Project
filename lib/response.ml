@@ -5,6 +5,11 @@ type response = {
   body : Body.t;
 }
 
+let status_code response = response.status_code
+let status_message response = response.status_message
+let headers response = response.headers
+let body response = response.body
+
 let response_of status_code status_message headers body =
   { status_code; status_message; headers; body }
 
