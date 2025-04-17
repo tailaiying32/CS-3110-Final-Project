@@ -55,13 +55,16 @@ let read_request client_sock =
   in
   read_loop ""
 
-let write_response client_sock response request =
+let write_response client_sock response request duration_ms =
   let response_str = Response.string_of_response response in
 
-  (* Log the outgoing response with colorized status code *)
+  (* Log the outgoing response with colorized status code and duration *)
   let status = Response.status_code response in
   let colored_status = format_status_code status in
-  Printf.printf "--> %s %s\n%!" colored_status (Request.url request);
+  let method_str = Request.request_method request in
+  let url = Request.url request in
+  Printf.printf "--> %s %s %s %dms\n%!" method_str url colored_status
+    duration_ms;
 
   Lwt_unix.write client_sock
     (Bytes.of_string response_str)
@@ -79,13 +82,16 @@ let handle_socket_error f =
 let handle_connection handler client =
   Lwt.finalize
     (fun () ->
+      let start_time = Unix.gettimeofday () in
       let%lwt req_s = read_request client in
       let req = parse_request req_s in
       (* Log request *)
       let m = Request.request_method req and u = Request.url req in
       Printf.printf "<-- %s %s\n%!" (format_method m) u;
       let resp = handler req in
-      write_response client resp req)
+      let end_time = Unix.gettimeofday () in
+      let duration_ms = int_of_float ((end_time -. start_time) *. 1000.0) in
+      write_response client resp req duration_ms)
     (fun () -> Lwt_unix.close client)
 
 let start server handler =
