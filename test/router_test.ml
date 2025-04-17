@@ -21,10 +21,7 @@ let f2 (input : string) =
 
 (*empty router but with one response added to it. *)
 let router_add1 = Router.(add empty_router "/foo" f1)
-
-let exp_string =
-  "===== HOST =====\nexample.com\n===== CONTENT TYPE =====\nsample\n"
-
+let exp_string = "Host: example.com\r\nContent-Type: sample"
 let basic_header = Headers.t_of "example.com" "sample"
 
 let tests =
