@@ -130,7 +130,7 @@ let test_write_response_payload _ =
   in
 
   (* fire it off *)
-  Lwt_main.run (write_response server_sock response request);
+  Lwt_main.run (write_response server_sock response request 0);
 
   (* read back what was sent *)
   let got = read_all client_fd in
