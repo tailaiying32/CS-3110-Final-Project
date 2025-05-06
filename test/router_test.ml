@@ -12,12 +12,13 @@ let empty_router = Router.init ()
 let header = Headers.t_of "example.com" "text/plain"
 
 (*Basic function to test add with. *)
-let f1 (input : string) =
-  Response.response_of 200 "ok" header (Body.t_of_assoc_lst [ ("user", input) ])
-
-let f2 (input : string) =
+let f1 text_body =
   Response.response_of 200 "ok" header
-    (Body.t_of_assoc_lst [ ("user2", input) ])
+    (Body.t_of_assoc_lst [ ("user", Body.lookup "text" text_body) ])
+
+let f2 text_body =
+  Response.response_of 200 "ok" header
+    (Body.t_of_assoc_lst [ ("user2", Body.lookup "text2" text_body) ])
 
 (*empty router but with one response added to it. *)
 let router_add1 = Router.(add empty_router "/foo" f1)
@@ -30,18 +31,23 @@ let tests =
          ( "A newly initialized router should return 404 error for any path."
          >:: fun _ ->
            assert_equal (Response.not_found ())
-             (Router.get_response empty_router "/foo" "something")
+             (Router.get_response empty_router "/foo"
+                (Body.t_of_assoc_lst [ ("nonsense", "nonsense") ]))
              ~printer:Response.string_of_response );
          ( "Should be able to properly call an added function." >:: fun _ ->
-           assert_equal (f1 "yay")
-             Router.(get_response router_add1 "/foo" "yay")
+           assert_equal
+             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]))
+             Router.(
+               get_response router_add1 "/foo"
+                 (Body.t_of_assoc_lst [ ("text", "yay") ]))
              ~printer:Response.string_of_response );
          (* ( "trailing slashes still works" >:: fun _ -> assert_equal (f1
             "yay") Router.(get_response router_add1 "/foo/" "yay")
             ~printer:Response.string_of_response ); *)
          ( "Should be case sensitive" >:: fun _ ->
            assert_equal (Response.not_found ())
-             (Router.get_response router_add1 "/FoO" "yay")
+             (Router.get_response router_add1 "/FoO"
+                (Body.t_of_assoc_lst [ ("text", "yay") ]))
              ~printer:Response.string_of_response );
          (* ( "Handle white space properly" >:: fun _ -> assert_equal (f1 "yay")
             (Router.get_response router_add1 "/foo " "yay")
@@ -50,12 +56,18 @@ let tests =
          (*[TODO: ask team how we handle adding same path twice, for now i
            assumed it will overwrite previous. ]*)
          ( "Adding path twice" >:: fun _ ->
-           assert_equal (f2 "yay")
-             Router.(get_response (add router_add1 "/foo" f2) "/foo" "yay")
+           assert_equal
+             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]))
+             Router.(
+               get_response
+                 (add router_add1 "/foo" f2)
+                 "/foo"
+                 (Body.t_of_assoc_lst [ ("text2", "yay") ]))
              ~printer:Response.string_of_response );
          ( "adding empty string path should give 404 not found" >:: fun _ ->
            assert_equal (Response.not_found ())
-             (Router.get_response router_add1 "" "yay")
+             (Router.get_response router_add1 ""
+                (Body.t_of_assoc_lst [ ("text2", "yay") ]))
              ~printer:Response.string_of_response );
          ( "test construction of a new header" >:: fun _ ->
            assert_equal exp_string (Headers.string_of_t basic_header)
