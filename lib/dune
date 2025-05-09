@@ -4,4 +4,4 @@
   (pps lwt_ppx))
  (instrumentation
   (backend bisect_ppx))
- (libraries lwt.unix ANSITerminal batteries))
+ (libraries lwt.unix ANSITerminal batteries yojson))
