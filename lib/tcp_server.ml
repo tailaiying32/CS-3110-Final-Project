@@ -32,6 +32,7 @@ let format_status_code code =
   else ANSITerminal.sprintf [ ANSITerminal.yellow ] "%d" code
 
 (* Simplified request parsing function *)
+(* [Updated 2025.05.08 Andrew Park] now handles JSON body *)
 let parse_request request_str =
   (* Just extract method and path from the first line *)
   let lines = String.split_on_char '\n' request_str in
