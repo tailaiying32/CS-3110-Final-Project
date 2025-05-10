@@ -66,6 +66,56 @@ let router =
         (Body.t_of_assoc_lst [ ("message", Printf.sprintf "%s" corrections) ]))
 
 let router =
+  Router.add router "/wordle" (fun body ->
+      let attempt = Body.lookup "text" body in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [ ("message", Printf.sprintf "%s" (Wordle.check_word attempt)) ]))
+
+let router =
+  Router.add router "/capitalize" (fun body ->
+      let text = Body.lookup "text" body in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [ ("message", Printf.sprintf "%s" (String.capitalize_ascii text)) ]))
+
+let router =
+  Router.add router "/uppercase" (fun body ->
+      let text = Body.lookup "text" body in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [ ("message", Printf.sprintf "%s" (String.uppercase_ascii text)) ]))
+
+let router =
+  Router.add router "/lowercase" (fun body ->
+      let text = Body.lookup "text" body in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [ ("message", Printf.sprintf "%s" (String.lowercase_ascii text)) ]))
+
+let reverse_string str =
+  let char_arr = Array.of_seq (String.to_seq str) in
+  let len = String.length str in
+  for i = 0 to len / 2 do
+    let temp = char_arr.(i) in
+    char_arr.(i) <- char_arr.(len - 1 - i);
+    char_arr.(len - 1 - i) <- temp
+  done;
+  String.of_seq (Array.to_seq char_arr)
+
+let router =
+  Router.add router "/reverse" (fun body ->
+      let text = Body.lookup "text" body in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [ ("message", Printf.sprintf "%s" (reverse_string text)) ]))
+
+let router =
   Router.add router "/hello" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
@@ -97,7 +147,30 @@ let router =
         (Body.t_of_assoc_lst
            [ ("message", string_of_int (Random.int 1000000)) ]))
 
+let requests_handled = ref 0
+let start_time = Unix.gettimeofday ()
+
+let router =
+  Router.add router "/server-status" (fun _ ->
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [
+             ( "up-time",
+               Printf.sprintf "Elapsed time: %.3f seconds"
+                 (Unix.gettimeofday () -. start_time) );
+             ("requests-handled", Printf.sprintf "%d" !requests_handled);
+           ]))
+
+let router =
+  Router.add router "/help" (fun _ ->
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "text/plain")
+        (Body.t_of_assoc_lst
+           [ ("info", Printf.sprintf "Elapsed time:seconds") ]))
+
 let handle_request request =
+  requests_handled := !requests_handled + 1;
   let path = Request.url request in
   let body = Request.body request in
   Router.get_response router path body
@@ -114,7 +187,13 @@ let () =
   print_endline "  /time  - Get current time";
   print_endline "  /random - Get a random integer between 0 and 1,000,000";
   print_endline "  /cs3110 - Get a welcome message";
+  print_endline "  /uppercase - Convert your text into all-caps";
+  print_endline "  /lowercase - Convert your text into all-lowercase";
+  print_endline "  /capitalize - Capitalize your text";
   print_endline "  /spell-check - Spell check your text";
+  print_endline "  /server-status - Get basic statistics about the server";
+  print_endline "  /help - For information about how to structure requests";
+
   print_newline ();
 
   Lwt_main.run (Tcp_server.start server handle_request)
