@@ -1,6 +1,6 @@
 open Response
 
-type t = (string * (string -> response)) list
+type t = (string * (Body.t -> response)) list
 
 let init () = []
 let add (router : t) path fn = (path, fn) :: router

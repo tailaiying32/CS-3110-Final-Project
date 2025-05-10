@@ -1,27 +1,33 @@
-type value =
-  | Dict of (string * value) list
-  | Entry of string
+open Yojson.Basic
+open Yojson.Basic.Util
 
-type t = (string * value) list
+let extract_json_block block =
+  let len = String.length block in
+  (* Get the start index of the json block *)
+  let rec find_start i =
+    if i >= len then None
+    else if block.[i] = '{' then Some i
+    else find_start (i + 1)
+  in
+  (* Get the end index of the json block, taking into account nested
+     structure *)
+  let rec find_end i depth =
+    if i >= len then None
+    else
+      match block.[i] with
+      | '{' -> find_end (i + 1) (depth + 1)
+      | '}' -> if depth = 1 then Some i else find_end (i + 1) (depth - 1)
+      | _ -> find_end (i + 1) depth
+  in
+  match find_start 0 with
+  | None -> None
+  | Some start -> (
+      match find_end (start + 1) 1 with
+      | None -> None
+      | Some stop -> Some (String.sub block start (stop - start + 1)))
 
-exception EmptyJson
-
-let keys (json : t) = List.map fst json
-let values (json : t) = List.map snd json
-let pairs (json : t) = json
-
-let rec add (json : t) key value : t =
-  match json with
-  | [] -> [ (key, value) ]
-  | (k, v) :: t ->
-      if k = key then (key, value) :: t else (k, v) :: add t key value
-
-let rec del (json : t) key : t =
-  match json with
-  | [] -> []
-  | (k, v) :: t -> if k = key then t else (k, v) :: del t key
-
-let rec lookup (json : t) key =
-  match json with
-  | [] -> raise EmptyJson
-  | (k, v) :: t -> if k = key then v else lookup t key
+let assoc_of_json_string json_str =
+  try
+    let json = Yojson.Basic.from_string json_str in
+    json |> to_assoc |> List.map (fun (key, value) -> (key, to_string value))
+  with _ -> []

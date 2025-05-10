@@ -1,0 +1,226 @@
+commit e558e0f257f5c184164b48601859ca5790899e68
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Fri Mar 28 01:51:29 2025 -0400
+
+    INSTALL.md
+    
+    - dune build command
+
+commit 631eb53ff7b6b1103ca7da0074c8f57e4cc3f00c
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Thu Mar 27 21:41:01 2025 -0400
+
+    Added youtube link
+
+commit 89dbbccc34dfe8832d2da3feef77b6aa119470f5
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Thu Mar 27 11:49:52 2025 -0400
+
+    Refactored printing mechanics
+    
+    - Revised string_of functions for Headers and Response compilation units
+
+commit be902655b846da6fac13bdc7dfabe11ff7c5a1ba
+Merge: 92f912d 1f0ef23
+Author: Chahnwoo <91393402+Chahnwoo@users.noreply.github.com>
+Date:   Thu Mar 27 00:16:10 2025 -0400
+
+    Merge pull request #4 from tailaiying32/router-tests
+    
+    Built basic test suite for router.
+
+commit 1f0ef23fbbf9ccbfded64c8c3b7f1fa8b23e00aa
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Wed Mar 26 23:45:46 2025 -0400
+
+    Built basic test suite for router.
+
+commit 92f912d563bfb42f4ff4a2b7a2f25a25a3bdd1a0
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Wed Mar 26 10:40:43 2025 -0400
+
+    Added a third basic path to router
+
+commit 4711f756a73e071ef17ac4eec7b590dac340cea9
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Tue Mar 25 21:18:35 2025 -0400
+
+    gallery.yaml
+
+commit 4f2b096b0f70757d9f233f7ca0c9b4dd24345b4a
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Tue Mar 25 21:08:36 2025 -0400
+
+    AUTHORS.md and INSTALL.md
+
+commit a3e63fdcf2a3909d7d6bc648294fb5e8f9849ebe
+Merge: fe74f7f 8547d51
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Mar 25 20:48:46 2025 -0400
+
+    Merge pull request #3 from tailaiying32/lucas/driver
+    
+    Enhance CLI web server with routing and input handling
+
+commit 8547d510652673fa45cc629c02064b9ee43339f4
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Mar 25 20:47:36 2025 -0400
+
+    Enhance CLI web server with routing and input handling
+    
+    - Added functionality to read user input and display responses.
+    - Implemented example routes for "/hello" and "/time" with appropriate responses.
+    - Integrated ANSITerminal for styled output in the CLI.
+
+commit fe74f7f04d80f548ac826b5289b016a0a907bd19
+Merge: 008f9bb 98a6c13
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Mar 25 20:17:26 2025 -0400
+
+    Merge pull request #2 from tailaiying32/lucas/yaml
+    
+    Add gallery configuration file
+
+commit 98a6c13b33dcbeafd8a6f3ce74ce43b0a79906c3
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Mar 25 20:16:55 2025 -0400
+
+    Add gallery configuration file
+    
+    - Created gallery.yaml to define group members, project details, and demo video for the interactive calculator project.
+
+commit 008f9bb84381ffd760cf13db0915d9bae4dd6c98
+Merge: b6f3eb0 2c330bc
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Mon Mar 24 13:21:00 2025 -0400
+
+    Merge pull request #1 from tailaiying32/lucas/fix-typo
+    
+    Correct typo in EmptyJson exception documentation in json.mli
+
+commit 2c330bcd884bf3efccb5caf67e3204f062e86f5a
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Mon Mar 24 13:20:17 2025 -0400
+
+    Correct typo in EmptyJson exception documentation in json.mli
+
+commit b6f3eb00248f2c49aa2ff35b9b0ae6d371f8dba0
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Mon Mar 24 00:20:47 2025 -0400
+
+    Refactored code, implemented new compilation units
+    
+    - Implemented Headers and Body compilation units
+    - Refactored code in Request and Response compilation units to make use
+      of these new compilation units
+
+commit 79fc6b01022e23524b1e04c289a8e981a2d08bf1
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sun Mar 23 16:16:26 2025 -0400
+
+    Revised Request, Response, and Router Comp Units
+    
+    - Revised to work with one another
+
+commit f953f63cab72ae6e97021e6edbe76d3a5fdfd255
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sun Mar 23 16:00:46 2025 -0400
+
+    Revised type rep of JSON compilation unit
+    
+    - Enabled the use of nested dictionaries
+
+commit 6bc0eb9ae082b94b880c5ff75156e8c219f74852
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sun Mar 23 14:30:23 2025 -0400
+
+    Implemented JSON compilation unit
+    
+    - Assumption that entries of json are either (string, string) or
+      (string, dictionary) pairs
+
+commit 8a0dab673fa90b0fa62f78428bb6625cf9d4617f
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sun Mar 23 04:15:46 2025 -0400
+
+    Implemented basic compilation units
+
+commit 18fbf52c4999d07f466ac9c768486329e88b27a7
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Sat Mar 22 15:13:08 2025 -0400
+
+     missed deleting http folder.
+
+commit 3d245094770d482c21bede1e85279f76eeb08383
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Sat Mar 22 15:11:24 2025 -0400
+
+     undid previous change, Realized it could make things cluttered prematurely
+
+commit 3899b23aeb597cc43bf83dd1f1e629800982ca55
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Sat Mar 22 15:02:15 2025 -0400
+
+     Set up a folder structure in lib. Moved response compilation unit into http folder.
+
+commit 37901492526a6775f1ecbfa3b0c639c2de368228
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Sat Mar 22 13:46:52 2025 -0400
+
+    Added a structired test suite for HTTP, routing, server and Integration system. Configured dune file.
+
+commit 76c0a4719f7f95eaf697326acd69e4ba88c9db97
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sat Mar 22 01:51:05 2025 -0400
+
+    Response compilation unit implemented
+
+commit f43b6188f162ff95a3dd6734ec075ebd6374de69
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sat Mar 22 01:46:25 2025 -0400
+
+    Added dune file
+
+commit 3415efcd38900122dd1e2bf66f9c8227b6f250f0
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Fri Mar 7 16:46:17 2025 -0500
+
+    ReadME
+
+commit 2d8b84765cfdcdcc05d13e9e67fdc6718ffc7ba0
+Author: deniz421s <deniz.sanchez421@gmail.com>
+Date:   Fri Mar 7 16:13:50 2025 -0500
+
+    Update README.md
+    
+    Initial commit
+
+commit 59300ce734e508aee1c9b46ef9d70dc9665c7546
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Fri Mar 7 16:03:12 2025 -0500
+
+    Add name to README.md
+
+commit a5f92c235765c8fb4cbf26a3b20bbe97f1615f52
+Author: Tailai Ying <tty6@cornell.edu>
+Date:   Fri Mar 7 16:01:44 2025 -0500
+
+    Added Tailai's README
+
+commit e13ea20871741eda5e05d8587f0067ce35fd34c6
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Fri Mar 7 15:43:26 2025 -0500
+
+    Initial commit to README, Andrew Park
+
+commit 1f0f893e6ebace1ea5139f43624ee3d567e006a0
+Author: Chahnwoo <91393402+Chahnwoo@users.noreply.github.com>
+Date:   Fri Mar 7 15:41:16 2025 -0500
+
+    Create README.md
+
+commit 6d278f2f669be3d5f52ae0cdcbf16b031a5c8e4e
+Author: Tailai Ying <tty6@cornell.edu>
+Date:   Fri Mar 7 15:16:01 2025 -0500
+
+    Initial commit

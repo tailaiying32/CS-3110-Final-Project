@@ -1,6 +1,7 @@
 open Lwt
 open ANSITerminal
 open Lwt.Infix
+open Json
 
 type config = {
   port : int;
@@ -31,18 +32,24 @@ let format_status_code code =
   else ANSITerminal.sprintf [ ANSITerminal.yellow ] "%d" code
 
 (* Simplified request parsing function *)
+(* [Updated 2025.05.08 Andrew Park] now handles JSON body *)
 let parse_request request_str =
   (* Just extract method and path from the first line *)
   let lines = String.split_on_char '\n' request_str in
   let first_line = List.hd lines in
   let parts = String.split_on_char ' ' first_line in
+  let body_json =
+    match extract_json_block request_str with
+    | Some json -> json
+    | None -> ""
+  in
   match parts with
   | method_str :: path :: _ ->
       Request.request_of method_str path (Headers.t_of "" "")
-        (Body.t_of_assoc_lst [])
+        (Body.t_of_assoc_lst (assoc_of_json_string body_json))
   | _ ->
       Request.request_of "UNKNOWN" "/" (Headers.t_of "" "")
-        (Body.t_of_assoc_lst [])
+        (Body.t_of_assoc_lst (assoc_of_json_string body_json))
 
 let read_request client_sock =
   let buffer = Bytes.create 4096 in
