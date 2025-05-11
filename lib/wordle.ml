@@ -67,8 +67,12 @@ let reset_game () =
 
 (* Add a function to remove the most recent attempt *)
 let delete_last_attempt () =
-  match !user_attempts with
-  | [] -> None
-  | x :: xs ->
-      user_attempts := xs;
-      Some x
+  try
+    match !user_attempts with
+    | [] -> None
+    | x :: xs ->
+        user_attempts := xs;
+        Some x
+  with _ ->
+    Printf.eprintf "Error in delete_last_attempt\n";
+    None

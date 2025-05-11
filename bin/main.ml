@@ -3,6 +3,30 @@ open ANSITerminal
 open Lwt
 open Final_project.SpellingDictionary
 
+(* Record the server start time *)
+let start_time = Unix.gettimeofday ()
+
+(* Track the number of requests handled *)
+let requests_handled = ref 0
+
+(* wrapper function to handle errors in route handlers *)
+let with_error_handling handler request_body =
+  try handler request_body with
+  | Failure msg ->
+      Printf.eprintf "Error in route handler: %s\n" msg;
+      Response.response_of 500 "Internal Server Error"
+        (Headers.t_of "localhost" "application/json")
+        (Body.t_of_assoc_lst [ ("error", msg) ])
+  | Not_found ->
+      Printf.eprintf "Resource not found\n";
+      Response.not_found ()
+  | e ->
+      let error_msg = Printexc.to_string e in
+      Printf.eprintf "Unexpected error in route handler: %s\n" error_msg;
+      Response.response_of 500 "Internal Server Error"
+        (Headers.t_of "localhost" "application/json")
+        (Body.t_of_assoc_lst [ ("error", error_msg) ])
+
 (** [suggest_and_change_split split spell_dict] is the user's choice on the
     corrections for [split], with a potentially updated spelling dictionary.
     Raises: [EarlyQuitting] if an invalid option is chosen for [split]. *)
@@ -53,50 +77,6 @@ let spell_dict =
 
 let router = Router.init ()
 
-let router =
-  Router.add router "POST" "/spell-check" (fun body ->
-      let text = Body.lookup "text" body in
-      let splits = get_splits text in
-      let corrections, updated_dict =
-        suggest_and_change_text splits !spell_dict
-      in
-      spell_dict := updated_dict;
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst [ ("message", Printf.sprintf "%s" corrections) ]))
-
-let router =
-  Router.add router "POST" "/wordle" (fun body ->
-      let attempt = Body.lookup "text" body in
-      let result = Wordle.add_attempt attempt in
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst [ ("message", result) ]))
-
-let router =
-  Router.add router "POST" "/capitalize" (fun body ->
-      let text = Body.lookup "text" body in
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [ ("message", Printf.sprintf "%s" (String.capitalize_ascii text)) ]))
-
-let router =
-  Router.add router "POST" "/uppercase" (fun body ->
-      let text = Body.lookup "text" body in
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [ ("message", Printf.sprintf "%s" (String.uppercase_ascii text)) ]))
-
-let router =
-  Router.add router "POST" "/lowercase" (fun body ->
-      let text = Body.lookup "text" body in
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [ ("message", Printf.sprintf "%s" (String.lowercase_ascii text)) ]))
-
 let reverse_string str =
   let char_arr = Array.of_seq (String.to_seq str) in
   let len = String.length str in
@@ -107,14 +87,7 @@ let reverse_string str =
   done;
   String.of_seq (Array.to_seq char_arr)
 
-let router =
-  Router.add router "POST" "/reverse" (fun body ->
-      let text = Body.lookup "text" body in
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [ ("message", Printf.sprintf "%s" (reverse_string text)) ]))
-
+(* Basic routes *)
 let router =
   Router.add router "GET" "/hello" (fun _ ->
       Response.response_of 200 "OK"
@@ -147,9 +120,6 @@ let router =
         (Body.t_of_assoc_lst
            [ ("message", string_of_int (Random.int 1000000)) ]))
 
-let requests_handled = ref 0
-let start_time = Unix.gettimeofday ()
-
 let router =
   Router.add router "GET" "/server-status" (fun _ ->
       Response.response_of 200 "OK"
@@ -167,36 +137,150 @@ let router =
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
-           [ ("info", Printf.sprintf "Elapsed time:seconds") ]))
-
-(* DELETE endpoint to reset the game *)
-let router =
-  Router.add router "DELETE" "/wordle/reset" (fun _ ->
-      let old_attempts = Wordle.reset_game () in
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "application/json")
-        (Body.t_of_assoc_lst
            [
-             ("message", "Game reset successfully");
-             ("attempts_cleared", string_of_int (List.length old_attempts));
+             ( "info",
+               "Use POST requests with JSON body for text processing endpoints"
+             );
            ]))
 
-(* DELETE endpoint to remove the last attempt *)
+(* Text transformation routes with safe lookup *)
+let router =
+  Router.add router "POST" "/capitalize" (fun body ->
+      match Body.safe_lookup "text" body with
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'text' parameter") ])
+      | Some text ->
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "text/plain")
+            (Body.t_of_assoc_lst [ ("message", String.capitalize_ascii text) ]))
+
+let router =
+  Router.add router "POST" "/uppercase" (fun body ->
+      match Body.safe_lookup "text" body with
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'text' parameter") ])
+      | Some text ->
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "text/plain")
+            (Body.t_of_assoc_lst [ ("message", String.uppercase_ascii text) ]))
+
+let router =
+  Router.add router "POST" "/lowercase" (fun body ->
+      match Body.safe_lookup "text" body with
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'text' parameter") ])
+      | Some text ->
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "text/plain")
+            (Body.t_of_assoc_lst [ ("message", String.lowercase_ascii text) ]))
+
+let router =
+  Router.add router "POST" "/reverse" (fun body ->
+      match Body.safe_lookup "text" body with
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'text' parameter") ])
+      | Some text ->
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "text/plain")
+            (Body.t_of_assoc_lst [ ("message", reverse_string text) ]))
+
+(* Spell check route with safe lookup *)
+let router =
+  Router.add router "POST" "/spell-check" (fun body ->
+      match Body.safe_lookup "text" body with
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'text' parameter") ])
+      | Some text -> (
+          try
+            let splits = get_splits text in
+            let corrections, updated_dict =
+              suggest_and_change_text splits !spell_dict
+            in
+            spell_dict := updated_dict;
+            Response.response_of 200 "OK"
+              (Headers.t_of "localhost" "text/plain")
+              (Body.t_of_assoc_lst [ ("message", corrections) ])
+          with
+          | EarlyQuitting ->
+              Response.response_of 400 "Bad Request"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst
+                   [ ("error", "Spell check operation cancelled") ])
+          | e ->
+              let error_msg = Printexc.to_string e in
+              Response.response_of 500 "Internal Server Error"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst [ ("error", error_msg) ])))
+
+(* Wordle routes with safe lookup *)
+let router =
+  Router.add router "POST" "/wordle" (fun body ->
+      match Body.safe_lookup "text" body with
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'text' parameter") ])
+      | Some attempt -> (
+          try
+            let result = Wordle.add_attempt attempt in
+            Response.response_of 200 "OK"
+              (Headers.t_of "localhost" "text/plain")
+              (Body.t_of_assoc_lst [ ("message", result) ])
+          with e ->
+            let error_msg = Printexc.to_string e in
+            Response.response_of 500 "Internal Server Error"
+              (Headers.t_of "localhost" "application/json")
+              (Body.t_of_assoc_lst [ ("error", error_msg) ])))
+
+(* New DELETE endpoints for Wordle *)
+let router =
+  Router.add router "DELETE" "/wordle/reset" (fun _ ->
+      try
+        let old_attempts = Wordle.reset_game () in
+        Response.response_of 200 "OK"
+          (Headers.t_of "localhost" "application/json")
+          (Body.t_of_assoc_lst
+             [
+               ("message", "Game reset successfully");
+               ("attempts_cleared", string_of_int (List.length old_attempts));
+             ])
+      with e ->
+        let error_msg = Printexc.to_string e in
+        Response.response_of 500 "Internal Server Error"
+          (Headers.t_of "localhost" "application/json")
+          (Body.t_of_assoc_lst [ ("error", error_msg) ]))
+
 let router =
   Router.add router "DELETE" "/wordle/last-attempt" (fun _ ->
-      match Wordle.delete_last_attempt () with
-      | None ->
-          Response.response_of 404 "Not Found"
-            (Headers.t_of "localhost" "application/json")
-            (Body.t_of_assoc_lst [ ("error", "No attempts to delete") ])
-      | Some attempt ->
-          Response.response_of 200 "OK"
-            (Headers.t_of "localhost" "application/json")
-            (Body.t_of_assoc_lst
-               [
-                 ("message", "Last attempt deleted successfully");
-                 ("deleted_attempt", attempt);
-               ]))
+      try
+        match Wordle.delete_last_attempt () with
+        | None ->
+            Response.response_of 404 "Not Found"
+              (Headers.t_of "localhost" "application/json")
+              (Body.t_of_assoc_lst [ ("error", "No attempts to delete") ])
+        | Some attempt ->
+            Response.response_of 200 "OK"
+              (Headers.t_of "localhost" "application/json")
+              (Body.t_of_assoc_lst
+                 [
+                   ("message", "Last attempt deleted successfully");
+                   ("deleted_attempt", attempt);
+                 ])
+      with e ->
+        let error_msg = Printexc.to_string e in
+        Response.response_of 500 "Internal Server Error"
+          (Headers.t_of "localhost" "application/json")
+          (Body.t_of_assoc_lst [ ("error", error_msg) ]))
 
 let handle_request request =
   requests_handled := !requests_handled + 1;

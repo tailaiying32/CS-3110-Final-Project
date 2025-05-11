@@ -8,3 +8,7 @@ val string_of_t : t -> string
 
 val lookup : string -> t -> string
 (** [lookup key body] is the value associated with [key] in [body]. *)
+
+val safe_lookup : string -> t -> string option
+(** [safe_lookup key body] is Some value associated with [key] in [body], or
+    None if key doesn't exist. *)
