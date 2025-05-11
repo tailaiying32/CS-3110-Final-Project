@@ -22,6 +22,7 @@ let format_method method_str =
   match String.uppercase_ascii method_str with
   | "GET" -> ANSITerminal.sprintf [ ANSITerminal.green ] "%s" method_str
   | "POST" -> ANSITerminal.sprintf [ ANSITerminal.yellow ] "%s" method_str
+  | "DELETE" -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
   | _ -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
 
 let format_status_code code =

@@ -68,10 +68,10 @@ let router =
 let router =
   Router.add router "POST" "/wordle" (fun body ->
       let attempt = Body.lookup "text" body in
+      let result = Wordle.add_attempt attempt in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [ ("message", Printf.sprintf "%s" (Wordle.check_word attempt)) ]))
+        (Body.t_of_assoc_lst [ ("message", result) ]))
 
 let router =
   Router.add router "POST" "/capitalize" (fun body ->
@@ -169,6 +169,35 @@ let router =
         (Body.t_of_assoc_lst
            [ ("info", Printf.sprintf "Elapsed time:seconds") ]))
 
+(* DELETE endpoint to reset the game *)
+let router =
+  Router.add router "DELETE" "/wordle/reset" (fun _ ->
+      let old_attempts = Wordle.reset_game () in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "application/json")
+        (Body.t_of_assoc_lst
+           [
+             ("message", "Game reset successfully");
+             ("attempts_cleared", string_of_int (List.length old_attempts));
+           ]))
+
+(* DELETE endpoint to remove the last attempt *)
+let router =
+  Router.add router "DELETE" "/wordle/last-attempt" (fun _ ->
+      match Wordle.delete_last_attempt () with
+      | None ->
+          Response.response_of 404 "Not Found"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "No attempts to delete") ])
+      | Some attempt ->
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [
+                 ("message", "Last attempt deleted successfully");
+                 ("deleted_attempt", attempt);
+               ]))
+
 let handle_request request =
   requests_handled := !requests_handled + 1;
   let path = Request.url request in
@@ -184,16 +213,21 @@ let () =
 
   print_endline "Starting web server...";
   print_endline "Available routes:";
-  print_endline "  /hello - Get a hello message";
-  print_endline "  /time  - Get current time";
-  print_endline "  /random - Get a random integer between 0 and 1,000,000";
-  print_endline "  /cs3110 - Get a welcome message";
-  print_endline "  /uppercase - Convert your text into all-caps";
-  print_endline "  /lowercase - Convert your text into all-lowercase";
-  print_endline "  /capitalize - Capitalize your text";
-  print_endline "  /spell-check - Spell check your text";
-  print_endline "  /server-status - Get basic statistics about the server";
-  print_endline "  /help - For information about how to structure requests";
+  print_endline "  GET /hello - Get a hello message";
+  print_endline "  GET /time - Get current time";
+  print_endline "  GET /random - Get a random integer between 0 and 1,000,000";
+  print_endline "  GET /cs3110 - Get a welcome message";
+  print_endline "  POST /uppercase - Convert your text into all-caps";
+  print_endline "  POST /lowercase - Convert your text into all-lowercase";
+  print_endline "  POST /capitalize - Capitalize your text";
+  print_endline "  POST /spell-check - Spell check your text";
+  print_endline "  POST /reverse - Reverse your text";
+  print_endline "  GET /server-status - Get basic statistics about the server";
+  print_endline "  GET /help - For information about how to structure requests";
+  print_endline "  POST /wordle - Submit a guess for today's Wordle";
+  print_endline "  DELETE /wordle/reset - Reset your Wordle game";
+  print_endline
+    "  DELETE /wordle/last-attempt - Remove your most recent Wordle attempt";
 
   print_newline ();
 
