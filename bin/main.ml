@@ -54,7 +54,7 @@ let spell_dict =
 let router = Router.init ()
 
 let router =
-  Router.add router "/spell-check" (fun body ->
+  Router.add router "POST" "/spell-check" (fun body ->
       let text = Body.lookup "text" body in
       let splits = get_splits text in
       let corrections, updated_dict =
@@ -66,7 +66,7 @@ let router =
         (Body.t_of_assoc_lst [ ("message", Printf.sprintf "%s" corrections) ]))
 
 let router =
-  Router.add router "/wordle" (fun body ->
+  Router.add router "POST" "/wordle" (fun body ->
       let attempt = Body.lookup "text" body in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
@@ -74,7 +74,7 @@ let router =
            [ ("message", Printf.sprintf "%s" (Wordle.check_word attempt)) ]))
 
 let router =
-  Router.add router "/capitalize" (fun body ->
+  Router.add router "POST" "/capitalize" (fun body ->
       let text = Body.lookup "text" body in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
@@ -82,7 +82,7 @@ let router =
            [ ("message", Printf.sprintf "%s" (String.capitalize_ascii text)) ]))
 
 let router =
-  Router.add router "/uppercase" (fun body ->
+  Router.add router "POST" "/uppercase" (fun body ->
       let text = Body.lookup "text" body in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
@@ -90,7 +90,7 @@ let router =
            [ ("message", Printf.sprintf "%s" (String.uppercase_ascii text)) ]))
 
 let router =
-  Router.add router "/lowercase" (fun body ->
+  Router.add router "POST" "/lowercase" (fun body ->
       let text = Body.lookup "text" body in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
@@ -108,7 +108,7 @@ let reverse_string str =
   String.of_seq (Array.to_seq char_arr)
 
 let router =
-  Router.add router "/reverse" (fun body ->
+  Router.add router "POST" "/reverse" (fun body ->
       let text = Body.lookup "text" body in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
@@ -116,13 +116,13 @@ let router =
            [ ("message", Printf.sprintf "%s" (reverse_string text)) ]))
 
 let router =
-  Router.add router "/hello" (fun _ ->
+  Router.add router "GET" "/hello" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst [ ("message", "Hello, World!") ]))
 
 let router =
-  Router.add router "/time" (fun _ ->
+  Router.add router "GET" "/time" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -135,13 +135,13 @@ let router =
            ]))
 
 let router =
-  Router.add router "/cs3110" (fun _ ->
+  Router.add router "GET" "/cs3110" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst [ ("message", "Welcome to 3110!") ]))
 
 let router =
-  Router.add router "/random" (fun _ ->
+  Router.add router "GET" "/random" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -151,7 +151,7 @@ let requests_handled = ref 0
 let start_time = Unix.gettimeofday ()
 
 let router =
-  Router.add router "/server-status" (fun _ ->
+  Router.add router "GET" "/server-status" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -163,7 +163,7 @@ let router =
            ]))
 
 let router =
-  Router.add router "/help" (fun _ ->
+  Router.add router "GET" "/help" (fun _ ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -172,8 +172,9 @@ let router =
 let handle_request request =
   requests_handled := !requests_handled + 1;
   let path = Request.url request in
+  let method_str = Request.request_method request in
   let body = Request.body request in
-  Router.get_response router path body
+  Router.get_response router method_str path body
 
 let () =
   let config =
