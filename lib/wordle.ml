@@ -20,36 +20,46 @@ let word_today =
 let letters_of word = word |> String.to_seq |> Array.of_seq
 let letters_today = letters_of word_today
 
+let valid_words =
+  SpellingDictionary.combined_dictionary "data/SINGLE.TXT"
+    "data/user_dictionary.txt"
+
+let color_word guess =
+  let result = Array.make 5 "Gray" in
+  let used = Array.make 5 false in
+  let guess_chars = Array.init 5 (fun idx -> String.get guess idx) in
+  for i = 0 to 4 do
+    if guess_chars.(i) = letters_today.(i) then begin
+      result.(i) <- "Green";
+      used.(i) <- true
+    end
+  done;
+
+  for i = 0 to 4 do
+    if result.(i) = "Gray" then
+      for j = 0 to 4 do
+        if (not used.(j)) && guess_chars.(i) = letters_today.(j) then begin
+          result.(i) <- "Yellow";
+          used.(j) <- true
+        end
+      done
+  done;
+  result
+
 let check_word test =
   let check = test |> String.uppercase_ascii in
   if String.length check <> 5 then "Word must be 5 letters."
   else if check = word_today then "Correct!"
+  else if not (SpellingDictionary.spell_check check valid_words) then
+    "Word does not exist in dictionary."
   else
-    let check_letters = letters_of check in
-    let returned_string = ref "" in
-    for i = 0 to 4 do
-      if check_letters.(i) = letters_today.(i) then
-        returned_string :=
-          !returned_string ^ Printf.sprintf "Letter %d : Correct\n" (i + 1)
-      else
-        let letter_exists =
-          Array.fold_left
-            (fun acc elt -> acc || elt)
-            false
-            (Array.mapi
-               (fun idx correct_letter -> correct_letter = check_letters.(i))
-               letters_today)
-        in
-        if letter_exists then
-          returned_string :=
-            !returned_string
-            ^ Printf.sprintf "Letter %d : Letter Misplaced\n" (i + 1)
-        else
-          returned_string :=
-            !returned_string
-            ^ Printf.sprintf "Letter %d : Letter Incorrect\n" (i + 1)
-    done;
-    !returned_string ^ "\nCorrect word is: " ^ word_today
+    let colors = color_word check in
+    let indexed =
+      Array.mapi
+        (fun idx s -> Printf.sprintf "Letter %d : %s\n" (idx + 1) s)
+        colors
+    in
+    Array.fold_left (fun acc s -> acc ^ s) "" indexed
 
 (* Store user attempts in a mutable reference *)
 let user_attempts = ref []
