@@ -18,3 +18,7 @@ let string_of_t body =
     else String.sub json_str 0 (String.length json_str - 1) ^ "}"
   in
   json_str
+
+(* used for error handling *)
+let safe_lookup key assoc_lst =
+  try Some (lookup key assoc_lst) with Failure _ -> None

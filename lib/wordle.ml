@@ -53,10 +53,54 @@ let check_word test =
   else if not (SpellingDictionary.spell_check check valid_words) then
     "Word does not exist in dictionary."
   else
-    let colors = color_word check in
-    let indexed =
-      Array.mapi
-        (fun idx s -> Printf.sprintf "Letter %d : %s\n" (idx + 1) s)
-        colors
-    in
-    Array.fold_left (fun acc s -> acc ^ s) "" indexed
+    let check_letters = letters_of check in
+    let returned_string = ref "" in
+    for i = 0 to 4 do
+      if check_letters.(i) = letters_today.(i) then
+        returned_string :=
+          !returned_string ^ Printf.sprintf "Letter %d : Correct\n" (i + 1)
+      else
+        let letter_exists =
+          Array.fold_left
+            (fun acc elt -> acc || elt)
+            false
+            (Array.mapi
+               (fun idx correct_letter -> correct_letter = check_letters.(i))
+               letters_today)
+        in
+        if letter_exists then
+          returned_string :=
+            !returned_string
+            ^ Printf.sprintf "Letter %d : Letter Misplaced\n" (i + 1)
+        else
+          returned_string :=
+            !returned_string
+            ^ Printf.sprintf "Letter %d : Letter Incorrect\n" (i + 1)
+    done;
+    !returned_string ^ "\nCorrect word is: " ^ word_today
+
+(* Store user attempts in a mutable reference *)
+let user_attempts = ref []
+
+(* Add a function to record an attempt *)
+let add_attempt attempt =
+  user_attempts := attempt :: !user_attempts;
+  check_word attempt
+
+(* Add a function to clear all attempts *)
+let reset_game () =
+  let old_attempts = !user_attempts in
+  user_attempts := [];
+  old_attempts
+
+(* Add a function to remove the most recent attempt *)
+let delete_last_attempt () =
+  try
+    match !user_attempts with
+    | [] -> None
+    | x :: xs ->
+        user_attempts := xs;
+        Some x
+  with _ ->
+    Printf.eprintf "Error in delete_last_attempt\n";
+    None

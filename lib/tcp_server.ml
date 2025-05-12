@@ -22,6 +22,7 @@ let format_method method_str =
   match String.uppercase_ascii method_str with
   | "GET" -> ANSITerminal.sprintf [ ANSITerminal.green ] "%s" method_str
   | "POST" -> ANSITerminal.sprintf [ ANSITerminal.yellow ] "%s" method_str
+  | "DELETE" -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
   | _ -> ANSITerminal.sprintf [ ANSITerminal.red ] "%s" method_str
 
 let format_status_code code =
@@ -90,15 +91,45 @@ let handle_connection handler client =
   Lwt.finalize
     (fun () ->
       let start_time = Unix.gettimeofday () in
-      let%lwt req_s = read_request client in
-      let req = parse_request req_s in
-      (* Log request *)
-      let m = Request.request_method req and u = Request.url req in
-      Printf.printf "<-- %s %s\n%!" (format_method m) u;
-      let resp = handler req in
-      let end_time = Unix.gettimeofday () in
-      let duration_ms = int_of_float ((end_time -. start_time) *. 1000.0) in
-      write_response client resp req duration_ms)
+      Lwt.catch
+        (fun () ->
+          let%lwt req_s = read_request client in
+          let req = parse_request req_s in
+          (* Log request *)
+          let m = Request.request_method req and u = Request.url req in
+          Printf.printf "<-- %s %s\n%!" (format_method m) u;
+
+          (* Wrap handler call in try-catch *)
+          let resp =
+            try handler req
+            with e ->
+              Printf.eprintf "Error in request handler: %s\n%!"
+                (Printexc.to_string e);
+              Response.response_of 500 "Internal Server Error"
+                (Headers.t_of "localhost" "text/plain")
+                (Body.t_of_assoc_lst
+                   [ ("error", "Internal server error occurred") ])
+          in
+
+          let end_time = Unix.gettimeofday () in
+          let duration_ms = int_of_float ((end_time -. start_time) *. 1000.0) in
+          write_response client resp req duration_ms)
+        (fun e ->
+          Printf.eprintf "Error processing request: %s\n%!"
+            (Printexc.to_string e);
+          (* Return a 500 error response *)
+          let resp =
+            Response.response_of 500 "Internal Server Error"
+              (Headers.t_of "localhost" "text/plain")
+              (Body.t_of_assoc_lst
+                 [ ("error", "Internal server error occurred") ])
+          in
+          let end_time = Unix.gettimeofday () in
+          let duration_ms = int_of_float ((end_time -. start_time) *. 1000.0) in
+          write_response client resp
+            (Request.request_of "ERROR" "/" (Headers.t_of "" "")
+               (Body.t_of_assoc_lst []))
+            duration_ms))
     (fun () -> Lwt_unix.close client)
 
 let start server handler =

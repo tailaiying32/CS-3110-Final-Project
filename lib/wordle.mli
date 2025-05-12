@@ -11,3 +11,13 @@ val word_today : string
 val check_word : string -> string
 (** [check_word guess] is an explanation of how well [guess] matches
     [word_today]. *)
+
+val add_attempt : string -> string
+(** [add_attempt guess] adds [guess] to the list of attempts. *)
+
+val reset_game : unit -> string list
+(** [reset_game ()] resets the list of attempts to an empty list. *)
+
+val delete_last_attempt : unit -> string option
+(** [delete_last_attempt ()] deletes the last attempt from the list of attempts.
+*)

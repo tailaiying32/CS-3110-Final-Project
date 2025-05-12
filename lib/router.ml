@@ -1,11 +1,13 @@
 open Response
 
-type t = (string * (Body.t -> response)) list
+type t = (string * string * (Body.t -> response)) list
 
 let init () = []
-let add (router : t) path fn = (path, fn) :: router
+let add (router : t) method_str path fn = (method_str, path, fn) :: router
 
-let rec get_response (router : t) path args =
+let rec get_response (router : t) method_str path args =
   match router with
   | [] -> not_found ()
-  | (k, v) :: t -> if k = path then v args else get_response t path args
+  | (m, p, v) :: t ->
+      if m = method_str && p = path then v args
+      else get_response t method_str path args
