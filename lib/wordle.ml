@@ -53,31 +53,13 @@ let check_word test =
   else if not (SpellingDictionary.spell_check check valid_words) then
     "Word does not exist in dictionary."
   else
-    let check_letters = letters_of check in
-    let returned_string = ref "" in
-    for i = 0 to 4 do
-      if check_letters.(i) = letters_today.(i) then
-        returned_string :=
-          !returned_string ^ Printf.sprintf "Letter %d : Correct\n" (i + 1)
-      else
-        let letter_exists =
-          Array.fold_left
-            (fun acc elt -> acc || elt)
-            false
-            (Array.mapi
-               (fun idx correct_letter -> correct_letter = check_letters.(i))
-               letters_today)
-        in
-        if letter_exists then
-          returned_string :=
-            !returned_string
-            ^ Printf.sprintf "Letter %d : Letter Misplaced\n" (i + 1)
-        else
-          returned_string :=
-            !returned_string
-            ^ Printf.sprintf "Letter %d : Letter Incorrect\n" (i + 1)
-    done;
-    !returned_string ^ "\nCorrect word is: " ^ word_today
+    let colors = color_word check in
+    let indexed =
+      Array.mapi
+        (fun idx s -> Printf.sprintf "Letter %d : %s\n" (idx + 1) s)
+        colors
+    in
+    Array.fold_left (fun acc s -> acc ^ s) "" indexed
 
 (* Store user attempts in a mutable reference *)
 let user_attempts = ref []
