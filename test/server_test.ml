@@ -154,7 +154,11 @@ let test_format_method _ =
 
   (* Test case insensitivity *)
   let get_lower_formatted = format_method "get" in
-  assert_equal ~printer:(fun x -> x) "\027[32mget\027[0m" get_lower_formatted
+  assert_equal ~printer:(fun x -> x) "\027[32mget\027[0m" get_lower_formatted;
+
+  (*Test delete method*)
+  let delete_str = format_method "DELETE" in
+  assert_equal ~printer:(fun x -> x) "\027[31mDELETE\027[0m" delete_str
 
 let test_format_status_code _ =
   (* Test 2xx status codes - should be green *)
@@ -274,6 +278,47 @@ let test_port_validation _ =
                  assert_failure "handler should not be invoked"))))
     invalid_ports
 
+let test_request_getters_and_string_of_request _ =
+  let headers = Headers.t_of "localhost" "text/plain" in
+  let body = Body.t_of_assoc_lst [ ("msg", "hello") ] in
+  let req = Request.request_of "GET" "/index" headers body in
+
+  (* Test accessors *)
+  assert_equal "GET" (Request.request_method req);
+  assert_equal "/index" (Request.url req);
+  assert_equal headers (Request.headers req);
+  assert_equal body (Request.body req);
+
+  (* Test string_of_request formatting *)
+  let stringified = Request.string_of_request req in
+  assert_bool "string_of_request contains method"
+    (String.contains stringified 'G');
+  assert_bool "string_of_request contains body field"
+    (String.contains stringified 'm')
+
+let test_response_getters _ =
+  let headers = Headers.t_of "localhost" "text/plain" in
+  let body = Body.t_of_assoc_lst [ ("msg", "hello") ] in
+  let resp = Response.response_of 200 "OK" headers body in
+
+  (* Test accessors *)
+  assert_equal 200 (Response.status_code resp);
+  assert_equal "OK" (Response.status_message resp);
+  assert_equal headers (Response.headers resp);
+  assert_equal body (Response.body resp)
+
+let test_parse_request_with_json_body _ =
+  let json_body = {|{"user": "deniz", "role": "student"}|} in
+  let request_str =
+    "POST /json HTTP/1.1\r\nContent-Type: application/json\r\n\r\n" ^ json_body
+  in
+  let req = Tcp_server.parse_request request_str in
+  let body = Request.body req in
+  assert_equal "POST" (Request.request_method req);
+  assert_equal "/json" (Request.url req);
+  assert_equal (Some "deniz") (Body.safe_lookup "user" body);
+  assert_equal (Some "student") (Body.safe_lookup "role" body)
+
 let server_creation_tests =
   [
     "test_create_server" >:: test_create_server;
@@ -286,7 +331,9 @@ let request_parsing_tests =
     "test_parse_malformed_request" >:: test_parse_malformed_request;
     "test_parse_empty_request" >:: test_parse_empty_request;
     "test_parse_incomplete_request" >:: test_parse_incomplete_request;
+    "test_request_getters" >:: test_request_getters_and_string_of_request;
     "test_parse_post_request" >:: test_parse_post_request;
+    "test_parse_request_with_json_body" >:: test_parse_request_with_json_body;
   ]
 
 let request_reading_tests =
@@ -302,6 +349,7 @@ let response_tests =
     "test_write_response_payload" >:: test_write_response_payload;
     "test_format_method" >:: test_format_method;
     "test_format_status_code" >:: test_format_status_code;
+    "test_response_getters" >:: test_response_getters;
   ]
 
 let server_lifecycle_tests =

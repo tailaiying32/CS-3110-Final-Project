@@ -1,5 +1,6 @@
 open OUnit2
 open Final_project
+open Json
 
 (*[TODO: ask team ] this test suite was supposed to be for just response but i
   cant test it without using body.ml headers.ml and response.ml Should we turn
@@ -92,6 +93,36 @@ let tests =
          ( "Test construction of a new header" >:: fun _ ->
            assert_equal exp_string (Headers.string_of_t basic_header)
              ~printer:(fun x -> x) );
+         ( "safe_lookup returns Some value for valid key" >:: fun _ ->
+           let body = Body.t_of_assoc_lst [ ("foo", "bar") ] in
+           assert_equal (Some "bar") (Body.safe_lookup "foo" body) );
+         ( "safe_lookup returns None for invalid key" >:: fun _ ->
+           let body = Body.t_of_assoc_lst [ ("foo", "bar") ] in
+           assert_equal None (Body.safe_lookup "baz" body) );
+         (* extract_json_block tests *)
+         ( "Extract simple JSON block" >:: fun _ ->
+           let input = "prefix {\"key\":\"value\"} suffix" in
+           assert_equal (Some "{\"key\":\"value\"}") (extract_json_block input)
+         );
+         ( "Extract nested JSON block" >:: fun _ ->
+           let input = "junk {\"outer\": {\"inner\": 42}} tail" in
+           assert_equal (Some "{\"outer\": {\"inner\": 42}}")
+             (extract_json_block input) );
+         ( "No opening brace returns None" >:: fun _ ->
+           let input = "no json here" in
+           assert_equal None (extract_json_block input) );
+         ( "Unclosed JSON returns None" >:: fun _ ->
+           let input = "bad start {\"foo\": 1" in
+           assert_equal None (extract_json_block input) );
+         (* assoc_of_json_string tests *)
+         ( "assoc_of_json_string with valid json" >:: fun _ ->
+           let json = "{\"name\": \"deniz\", \"role\": \"student\"}" in
+           assert_equal
+             [ ("name", "deniz"); ("role", "student") ]
+             (assoc_of_json_string json) );
+         ( "assoc_of_json_string with invalid json returns []" >:: fun _ ->
+           let json = "{invalid json" in
+           assert_equal [] (assoc_of_json_string json) );
        ]
 
 let _ = run_test_tt_main tests
