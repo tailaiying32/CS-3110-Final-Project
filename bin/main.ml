@@ -289,6 +289,49 @@ let handle_request request =
   let body = Request.body request in
   Router.get_response router method_str path body
 
+let rec run_local_mode () : unit Lwt.t =
+  Printf.printf "\n> Enter request line (e.g. GET /hello): ";
+  flush stdout;
+
+  (* Ensure prompt shows immediately *)
+  let line = read_line () in
+
+  if line = "exit" then (
+    Printf.printf "Exiting local mode.\n";
+    flush stdout;
+    exit 0);
+
+  let parts = String.split_on_char ' ' line in
+  let formatted_request =
+    match parts with
+    | [ method_; path ] ->
+        Printf.sprintf "%s %s HTTP/1.1\r\nHost: localhost\r\n\r\n" method_ path
+    | _ ->
+        Printf.printf "Invalid format. Use: METHOD /path\n";
+        flush stdout;
+        "" (* Dummy value, won't be used *)
+  in
+
+  let%lwt () =
+    if formatted_request = "" then Lwt.return_unit
+    else
+      let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+      let sockaddr = Unix.ADDR_INET (Unix.inet_addr_loopback, 8080) in
+      let%lwt () = Lwt_unix.connect sock sockaddr in
+      let%lwt _ =
+        Lwt_unix.write_string sock formatted_request 0
+          (String.length formatted_request)
+      in
+      let buf = Bytes.create 4096 in
+      let%lwt len = Lwt_unix.read sock buf 0 4096 in
+      let resp = Bytes.sub_string buf 0 len in
+      Printf.printf "Response from server:\n%s\n" resp;
+      flush stdout;
+      Lwt.return_unit
+  in
+
+  run_local_mode ()
+
 let () =
   let config =
     { Tcp_server.port = 8080; host = "localhost"; max_connections = 10 }
@@ -312,7 +355,12 @@ let () =
   print_endline "  DELETE /wordle/reset - Reset your Wordle game";
   print_endline
     "  DELETE /wordle/last-attempt - Remove your most recent Wordle attempt";
-
   print_newline ();
 
-  Lwt_main.run (Tcp_server.start server handle_request)
+  let server_thread = Tcp_server.start server handle_request in
+
+  if Array.length Sys.argv > 1 && Sys.argv.(1) = "local" then (
+    print_endline "You have succesffuly launched local mode";
+    print_endline "Local mode only supports get request";
+    Lwt_main.run (Lwt.join [ server_thread; run_local_mode () ]))
+  else Lwt_main.run server_thread

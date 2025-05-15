@@ -1,4 +1,6 @@
 (executable
  (public_name final_project)
  (name main)
- (libraries final_project ANSITerminal))
+ (libraries final_project ANSITerminal)
+  (preprocess
+  (pps lwt_ppx)))
