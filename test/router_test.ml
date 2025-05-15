@@ -13,18 +13,21 @@ let empty_router = Router.init ()
 let header = Headers.t_of "example.com" "text/plain"
 
 (*Basic function to test add with. *)
-let f1 text_body =
-  Response.response_of 200 "ok" header
-    (Body.t_of_assoc_lst [ ("user", Body.lookup "text" text_body) ])
+let f1 body _query_params =
+  Response.response_of 200 "OK" (Headers.t_of "" "")
+    (Body.t_of_assoc_lst [ ("text", "yay") ])
 
-let f2 text_body =
-  Response.response_of 200 "ok" header
-    (Body.t_of_assoc_lst [ ("user2", Body.lookup "text2" text_body) ])
+let f2 body _query_params =
+  Response.response_of 200 "OK" (Headers.t_of "" "")
+    (Body.t_of_assoc_lst [ ("text2", "yay") ])
 
 (*empty router but with one response added to it with GET method *)
-let router_add1 = Router.(add empty_router "GET" "/foo" f1)
-let exp_string = "Host: example.com\r\nContent-Type: sample"
-let basic_header = Headers.t_of "example.com" "sample"
+let router_add1 = Router.add empty_router "GET" "/foo" f1
+
+let exp_string =
+  "Content-Type: text/plain\r\nHost: localhost\r\nContent-Length: 0\r\n"
+
+let basic_header = Headers.t_of "localhost" "text/plain"
 
 let tests =
   "Router test suite"
@@ -37,10 +40,38 @@ let tests =
              ~printer:Response.string_of_response );
          ( "Should be able to properly call an added function." >:: fun _ ->
            assert_equal
-             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]))
+             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]) Query_params.empty)
              Router.(
                get_response router_add1 "GET" "/foo"
                  (Body.t_of_assoc_lst [ ("text", "yay") ]))
+             ~printer:Response.string_of_response );
+         ( "Should handle query parameters correctly" >:: fun _ ->
+           let router =
+             Router.add empty_router "GET" "/test" (fun body query_params ->
+                 let value =
+                   match Query_params.get "key" query_params with
+                   | Some v -> v
+                   | None -> "default"
+                 in
+                 Response.response_of 200 "OK" (Headers.t_of "" "")
+                   (Body.t_of_assoc_lst [ ("value", value) ]))
+           in
+           assert_equal
+             (Response.response_of 200 "OK" (Headers.t_of "" "")
+                (Body.t_of_assoc_lst [ ("value", "test") ]))
+             (Router.get_response router "GET" "/test?key=test"
+                (Body.t_of_assoc_lst []))
+             ~printer:Response.string_of_response );
+         ( "Should handle URLs without query parameters" >:: fun _ ->
+           let router =
+             Router.add empty_router "GET" "/test" (fun body query_params ->
+                 Response.response_of 200 "OK" (Headers.t_of "" "")
+                   (Body.t_of_assoc_lst [ ("value", "no params") ]))
+           in
+           assert_equal
+             (Response.response_of 200 "OK" (Headers.t_of "" "")
+                (Body.t_of_assoc_lst [ ("value", "no params") ]))
+             (Router.get_response router "GET" "/test" (Body.t_of_assoc_lst []))
              ~printer:Response.string_of_response );
          ( "Should be case sensitive for path" >:: fun _ ->
            assert_equal (Response.not_found ())
@@ -61,19 +92,19 @@ let tests =
          >:: fun _ ->
            let router_with_both = Router.add router_add1 "POST" "/foo" f2 in
            assert_equal
-             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]))
+             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]) Query_params.empty)
              (Router.get_response router_with_both "GET" "/foo"
                 (Body.t_of_assoc_lst [ ("text", "yay") ]))
              ~printer:Response.string_of_response;
            assert_equal
-             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]))
+             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]) Query_params.empty)
              (Router.get_response router_with_both "POST" "/foo"
                 (Body.t_of_assoc_lst [ ("text2", "yay") ]))
              ~printer:Response.string_of_response );
          ( "Adding same path and method twice should overwrite previous"
          >:: fun _ ->
            assert_equal
-             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]))
+             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]) Query_params.empty)
              Router.(
                get_response
                  (add router_add1 "GET" "/foo" f2)
