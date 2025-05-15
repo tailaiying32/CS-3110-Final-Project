@@ -6,5 +6,5 @@ type t = {
 let t_of host content_type = { host; content_type }
 
 let string_of_t headers =
-  Printf.sprintf "Host: %s\r\nContent-Type: %s" headers.host
-    headers.content_type
+  Printf.sprintf "Content-Type: %s\r\nHost: %s\r\nContent-Length: 0\r\n"
+    headers.content_type headers.host
