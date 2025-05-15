@@ -1,7 +1,7 @@
 open OUnit2
 open Lwt
 open Final_project
-open Tcp_server
+open TcpServer
 
 let socketpair () =
   let r, w = Unix.socketpair Unix.PF_UNIX Unix.SOCK_STREAM 0 in
@@ -312,7 +312,7 @@ let test_parse_request_with_json_body _ =
   let request_str =
     "POST /json HTTP/1.1\r\nContent-Type: application/json\r\n\r\n" ^ json_body
   in
-  let req = Tcp_server.parse_request request_str in
+  let req = TcpServer.parse_request request_str in
   let body = Request.body req in
   assert_equal "POST" (Request.request_method req);
   assert_equal "/json" (Request.url req);

@@ -1,6 +1,6 @@
 open Response
 
-type t = (string * string * (Body.t -> Query_params.t -> response)) list
+type t = (string * string * (Body.t -> QueryParams.t -> response)) list
 
 let init () = []
 let add (router : t) method_str path fn = (method_str, path, fn) :: router
@@ -12,7 +12,7 @@ let get_base_path url =
 
 let rec get_response (router : t) method_str path args =
   let base_path = get_base_path path in
-  let query_params = Query_params.of_string path in
+  let query_params = QueryParams.of_string path in
   match router with
   | [] -> not_found ()
   | (m, p, v) :: t ->

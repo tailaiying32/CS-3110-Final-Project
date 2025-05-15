@@ -13,11 +13,11 @@ let empty_router = Router.init ()
 let header = Headers.t_of "example.com" "text/plain"
 
 (*Basic function to test add with. *)
-let f1 body _query_params =
+let f1 body _QueryParams =
   Response.response_of 200 "OK" (Headers.t_of "" "")
     (Body.t_of_assoc_lst [ ("text", "yay") ])
 
-let f2 body _query_params =
+let f2 body _QueryParams =
   Response.response_of 200 "OK" (Headers.t_of "" "")
     (Body.t_of_assoc_lst [ ("text2", "yay") ])
 
@@ -40,7 +40,7 @@ let tests =
              ~printer:Response.string_of_response );
          ( "Should be able to properly call an added function." >:: fun _ ->
            assert_equal
-             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]) Query_params.empty)
+             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]) QueryParams.empty)
              Router.(
                get_response router_add1 "GET" "/foo"
                  (Body.t_of_assoc_lst [ ("text", "yay") ]))
@@ -49,7 +49,7 @@ let tests =
            let router =
              Router.add empty_router "GET" "/test" (fun body query_params ->
                  let value =
-                   match Query_params.get "key" query_params with
+                   match QueryParams.get "key" query_params with
                    | Some v -> v
                    | None -> "default"
                  in
@@ -92,19 +92,19 @@ let tests =
          >:: fun _ ->
            let router_with_both = Router.add router_add1 "POST" "/foo" f2 in
            assert_equal
-             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]) Query_params.empty)
+             (f1 (Body.t_of_assoc_lst [ ("text", "yay") ]) QueryParams.empty)
              (Router.get_response router_with_both "GET" "/foo"
                 (Body.t_of_assoc_lst [ ("text", "yay") ]))
              ~printer:Response.string_of_response;
            assert_equal
-             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]) Query_params.empty)
+             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]) QueryParams.empty)
              (Router.get_response router_with_both "POST" "/foo"
                 (Body.t_of_assoc_lst [ ("text2", "yay") ]))
              ~printer:Response.string_of_response );
          ( "Adding same path and method twice should overwrite previous"
          >:: fun _ ->
            assert_equal
-             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]) Query_params.empty)
+             (f2 (Body.t_of_assoc_lst [ ("text2", "yay") ]) QueryParams.empty)
              Router.(
                get_response
                  (add router_add1 "GET" "/foo" f2)
