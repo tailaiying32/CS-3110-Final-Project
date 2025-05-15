@@ -89,13 +89,13 @@ let reverse_string str =
 
 (* Basic routes *)
 let router =
-  Router.add router "GET" "/hello" (fun _ ->
+  Router.add router "GET" "/hello" (fun body query_params ->
       Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
+        (Headers.t_of "localhost" "application/json")
         (Body.t_of_assoc_lst [ ("message", "Hello, World!") ]))
 
 let router =
-  Router.add router "GET" "/time" (fun _ ->
+  Router.add router "GET" "/time" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -108,20 +108,20 @@ let router =
            ]))
 
 let router =
-  Router.add router "GET" "/cs3110" (fun _ ->
+  Router.add router "GET" "/cs3110" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst [ ("message", "Welcome to 3110!") ]))
 
 let router =
-  Router.add router "GET" "/random" (fun _ ->
+  Router.add router "GET" "/random" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
            [ ("message", string_of_int (Random.int 1000000)) ]))
 
 let router =
-  Router.add router "GET" "/server-status" (fun _ ->
+  Router.add router "GET" "/server-status" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -133,7 +133,7 @@ let router =
            ]))
 
 let router =
-  Router.add router "GET" "/help" (fun _ ->
+  Router.add router "GET" "/help" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -145,7 +145,7 @@ let router =
 
 (* Text transformation routes with safe lookup *)
 let router =
-  Router.add router "POST" "/capitalize" (fun body ->
+  Router.add router "POST" "/capitalize" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -157,7 +157,7 @@ let router =
             (Body.t_of_assoc_lst [ ("message", String.capitalize_ascii text) ]))
 
 let router =
-  Router.add router "POST" "/uppercase" (fun body ->
+  Router.add router "POST" "/uppercase" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -169,7 +169,7 @@ let router =
             (Body.t_of_assoc_lst [ ("message", String.uppercase_ascii text) ]))
 
 let router =
-  Router.add router "POST" "/lowercase" (fun body ->
+  Router.add router "POST" "/lowercase" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -181,7 +181,7 @@ let router =
             (Body.t_of_assoc_lst [ ("message", String.lowercase_ascii text) ]))
 
 let router =
-  Router.add router "POST" "/reverse" (fun body ->
+  Router.add router "POST" "/reverse" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -194,7 +194,7 @@ let router =
 
 (* Spell check route with safe lookup *)
 let router =
-  Router.add router "POST" "/spell-check" (fun body ->
+  Router.add router "POST" "/spell-check" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -224,7 +224,7 @@ let router =
 
 (* Wordle routes with safe lookup *)
 let router =
-  Router.add router "POST" "/wordle" (fun body ->
+  Router.add router "POST" "/wordle" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -244,7 +244,7 @@ let router =
 
 (* New DELETE endpoints for Wordle *)
 let router =
-  Router.add router "DELETE" "/wordle/reset" (fun _ ->
+  Router.add router "DELETE" "/wordle/reset" (fun body query_params ->
       try
         let old_attempts = Wordle.reset_game () in
         Response.response_of 200 "OK"
@@ -261,7 +261,7 @@ let router =
           (Body.t_of_assoc_lst [ ("error", error_msg) ]))
 
 let router =
-  Router.add router "DELETE" "/wordle/last-attempt" (fun _ ->
+  Router.add router "DELETE" "/wordle/last-attempt" (fun body query_params ->
       try
         match Wordle.delete_last_attempt () with
         | None ->
@@ -287,7 +287,10 @@ let handle_request request =
   let path = Request.url request in
   let method_str = Request.request_method request in
   let body = Request.body request in
-  Router.get_response router method_str path body
+  let response = Router.get_response router method_str path body in
+  Printf.printf "\nDEBUG Response:\n%s\n%!"
+    (Response.string_of_response response);
+  response
 
 let rec run_local_mode () : unit Lwt.t =
   Printf.printf "\n> Enter request line (e.g. GET /hello): ";
