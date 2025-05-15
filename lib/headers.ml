@@ -1,10 +1,14 @@
 type t = {
   host : string;
   content_type : string;
+  content_length : int;
 }
 
-let t_of host content_type = { host; content_type }
+let t_of host content_type = { host; content_type; content_length = 0 }
+
+let t_of_with_length host content_type content_length =
+  { host; content_type; content_length }
 
 let string_of_t headers =
-  Printf.sprintf "Host: %s\r\nContent-Type: %s" headers.host
-    headers.content_type
+  Printf.sprintf "Content-Type: %s\r\nHost: %s\r\nContent-Length: %d\r\n"
+    headers.content_type headers.host headers.content_length

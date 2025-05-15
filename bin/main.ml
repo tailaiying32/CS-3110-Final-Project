@@ -9,6 +9,142 @@ let start_time = Unix.gettimeofday ()
 (* Track the number of requests handled *)
 let requests_handled = ref 0
 
+(* Route details map *)
+let route_details =
+  [
+    ( "hello",
+      {|
+    Method: GET
+    Description: Returns a simple hello message
+    Response Format: JSON
+    Example Response: {"message": "Hello, World!"}
+  |}
+    );
+    ( "time",
+      {|
+    Method: GET
+    Description: Returns the current server time
+    Response Format: JSON
+    Example Response: {"time": "2025-03-28 01:51:29"}
+  |}
+    );
+    ( "random",
+      {|
+    Method: GET
+    Description: Returns a random integer between 0 and 1,000,000
+    Response Format: JSON
+    Example Response: {"message": "42"}
+  |}
+    );
+    ( "cs3110",
+      {|
+    Method: GET
+    Description: Returns a welcome message for CS 3110
+    Response Format: JSON
+    Example Response: {"message": "Welcome to 3110!"}
+  |}
+    );
+    ( "uppercase",
+      {|
+    Method: POST
+    Description: Converts input text to uppercase
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to convert
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "HELLO"}
+  |}
+    );
+    ( "lowercase",
+      {|
+    Method: POST
+    Description: Converts input text to lowercase
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to convert
+    Example Request: {"text": "HELLO"}
+    Example Response: {"message": "hello"}
+  |}
+    );
+    ( "capitalize",
+      {|
+    Method: POST
+    Description: Capitalizes the first letter of input text
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to capitalize
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "Hello"}
+  |}
+    );
+    ( "spell-check",
+      {|
+    Method: POST
+    Description: Performs spell checking on input text
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to spell check
+    Example Request: {"text": "helllo"}
+    Example Response: {"message": "hello"}
+  |}
+    );
+    ( "reverse",
+      {|
+    Method: POST
+    Description: Reverses the input text
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to reverse
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "olleh"}
+  |}
+    );
+    ( "server-status",
+      {|
+    Method: GET
+    Description: Returns basic server statistics
+    Response Format: JSON
+    Example Response: {
+      "up-time": "Elapsed time: 123.456 seconds",
+      "requests-handled": "42"
+    }
+  |}
+    );
+    ( "wordle",
+      {|
+    Method: POST
+    Description: Submit a guess for today's Wordle game
+    Request Format: JSON
+    Required Parameters:
+      - text: Your Wordle guess
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "Game feedback"}
+  |}
+    );
+    ( "wordle/reset",
+      {|
+    Method: DELETE
+    Description: Reset your current Wordle game
+    Response Format: JSON
+    Example Response: {
+      "message": "Game reset successfully",
+      "attempts_cleared": "3"
+    }
+  |}
+    );
+    ( "wordle/last-attempt",
+      {|
+    Method: DELETE
+    Description: Remove your most recent Wordle attempt
+    Response Format: JSON
+    Example Response: {
+      "message": "Last attempt deleted successfully",
+      "deleted_attempt": "hello"
+    }
+  |}
+    );
+  ]
+
 (* wrapper function to handle errors in route handlers *)
 let with_error_handling handler request_body =
   try handler request_body with
@@ -89,13 +225,13 @@ let reverse_string str =
 
 (* Basic routes *)
 let router =
-  Router.add router "GET" "/hello" (fun _ ->
+  Router.add router "GET" "/hello" (fun body query_params ->
       Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
+        (Headers.t_of "localhost" "application/json")
         (Body.t_of_assoc_lst [ ("message", "Hello, World!") ]))
 
 let router =
-  Router.add router "GET" "/time" (fun _ ->
+  Router.add router "GET" "/time" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -108,20 +244,20 @@ let router =
            ]))
 
 let router =
-  Router.add router "GET" "/cs3110" (fun _ ->
+  Router.add router "GET" "/cs3110" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst [ ("message", "Welcome to 3110!") ]))
 
 let router =
-  Router.add router "GET" "/random" (fun _ ->
+  Router.add router "GET" "/random" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
            [ ("message", string_of_int (Random.int 1000000)) ]))
 
 let router =
-  Router.add router "GET" "/server-status" (fun _ ->
+  Router.add router "GET" "/server-status" (fun body query_params ->
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "text/plain")
         (Body.t_of_assoc_lst
@@ -133,19 +269,48 @@ let router =
            ]))
 
 let router =
-  Router.add router "GET" "/help" (fun _ ->
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [
-             ( "info",
-               "Use POST requests with JSON body for text processing endpoints"
-             );
-           ]))
+  Router.add router "GET" "/help" (fun body query_params ->
+      match Query_params.get "route" query_params with
+      | Some route_name -> (
+          (* Try to find the specific route *)
+          match List.assoc_opt route_name route_details with
+          | Some details ->
+              Response.response_of 200 "OK"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst
+                   [ ("route", "/" ^ route_name); ("details", details) ])
+          | None ->
+              Response.response_of 404 "Not Found"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst
+                   [
+                     ("error", "Route not found");
+                     ("message", "The specified route does not exist");
+                     ( "available_routes",
+                       String.concat ", "
+                         (List.map
+                            (fun r -> "/" ^ r)
+                            (List.map fst route_details)) );
+                   ]))
+      | None ->
+          (* Return list of all available routes *)
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [
+                 ( "message",
+                   "Use the 'route' query parameter to get detailed \
+                    information about a specific route" );
+                 ("example", "/help?route=hello");
+                 ( "available_routes",
+                   String.concat ", "
+                     (List.map (fun r -> "/" ^ r) (List.map fst route_details))
+                 );
+               ]))
 
 (* Text transformation routes with safe lookup *)
 let router =
-  Router.add router "POST" "/capitalize" (fun body ->
+  Router.add router "POST" "/capitalize" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -157,7 +322,7 @@ let router =
             (Body.t_of_assoc_lst [ ("message", String.capitalize_ascii text) ]))
 
 let router =
-  Router.add router "POST" "/uppercase" (fun body ->
+  Router.add router "POST" "/uppercase" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -169,7 +334,7 @@ let router =
             (Body.t_of_assoc_lst [ ("message", String.uppercase_ascii text) ]))
 
 let router =
-  Router.add router "POST" "/lowercase" (fun body ->
+  Router.add router "POST" "/lowercase" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -181,7 +346,7 @@ let router =
             (Body.t_of_assoc_lst [ ("message", String.lowercase_ascii text) ]))
 
 let router =
-  Router.add router "POST" "/reverse" (fun body ->
+  Router.add router "POST" "/reverse" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -194,7 +359,7 @@ let router =
 
 (* Spell check route with safe lookup *)
 let router =
-  Router.add router "POST" "/spell-check" (fun body ->
+  Router.add router "POST" "/spell-check" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -224,7 +389,7 @@ let router =
 
 (* Wordle routes with safe lookup *)
 let router =
-  Router.add router "POST" "/wordle" (fun body ->
+  Router.add router "POST" "/wordle" (fun body query_params ->
       match Body.safe_lookup "text" body with
       | None ->
           Response.response_of 400 "Bad Request"
@@ -244,7 +409,7 @@ let router =
 
 (* New DELETE endpoints for Wordle *)
 let router =
-  Router.add router "DELETE" "/wordle/reset" (fun _ ->
+  Router.add router "DELETE" "/wordle/reset" (fun body query_params ->
       try
         let old_attempts = Wordle.reset_game () in
         Response.response_of 200 "OK"
@@ -261,7 +426,7 @@ let router =
           (Body.t_of_assoc_lst [ ("error", error_msg) ]))
 
 let router =
-  Router.add router "DELETE" "/wordle/last-attempt" (fun _ ->
+  Router.add router "DELETE" "/wordle/last-attempt" (fun body query_params ->
       try
         match Wordle.delete_last_attempt () with
         | None ->
