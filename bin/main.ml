@@ -9,6 +9,142 @@ let start_time = Unix.gettimeofday ()
 (* Track the number of requests handled *)
 let requests_handled = ref 0
 
+(* Route details map *)
+let route_details =
+  [
+    ( "hello",
+      {|
+    Method: GET
+    Description: Returns a simple hello message
+    Response Format: JSON
+    Example Response: {"message": "Hello, World!"}
+  |}
+    );
+    ( "time",
+      {|
+    Method: GET
+    Description: Returns the current server time
+    Response Format: JSON
+    Example Response: {"time": "2025-03-28 01:51:29"}
+  |}
+    );
+    ( "random",
+      {|
+    Method: GET
+    Description: Returns a random integer between 0 and 1,000,000
+    Response Format: JSON
+    Example Response: {"message": "42"}
+  |}
+    );
+    ( "cs3110",
+      {|
+    Method: GET
+    Description: Returns a welcome message for CS 3110
+    Response Format: JSON
+    Example Response: {"message": "Welcome to 3110!"}
+  |}
+    );
+    ( "uppercase",
+      {|
+    Method: POST
+    Description: Converts input text to uppercase
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to convert
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "HELLO"}
+  |}
+    );
+    ( "lowercase",
+      {|
+    Method: POST
+    Description: Converts input text to lowercase
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to convert
+    Example Request: {"text": "HELLO"}
+    Example Response: {"message": "hello"}
+  |}
+    );
+    ( "capitalize",
+      {|
+    Method: POST
+    Description: Capitalizes the first letter of input text
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to capitalize
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "Hello"}
+  |}
+    );
+    ( "spell-check",
+      {|
+    Method: POST
+    Description: Performs spell checking on input text
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to spell check
+    Example Request: {"text": "helllo"}
+    Example Response: {"message": "hello"}
+  |}
+    );
+    ( "reverse",
+      {|
+    Method: POST
+    Description: Reverses the input text
+    Request Format: JSON
+    Required Parameters:
+      - text: The text to reverse
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "olleh"}
+  |}
+    );
+    ( "server-status",
+      {|
+    Method: GET
+    Description: Returns basic server statistics
+    Response Format: JSON
+    Example Response: {
+      "up-time": "Elapsed time: 123.456 seconds",
+      "requests-handled": "42"
+    }
+  |}
+    );
+    ( "wordle",
+      {|
+    Method: POST
+    Description: Submit a guess for today's Wordle game
+    Request Format: JSON
+    Required Parameters:
+      - text: Your Wordle guess
+    Example Request: {"text": "hello"}
+    Example Response: {"message": "Game feedback"}
+  |}
+    );
+    ( "wordle/reset",
+      {|
+    Method: DELETE
+    Description: Reset your current Wordle game
+    Response Format: JSON
+    Example Response: {
+      "message": "Game reset successfully",
+      "attempts_cleared": "3"
+    }
+  |}
+    );
+    ( "wordle/last-attempt",
+      {|
+    Method: DELETE
+    Description: Remove your most recent Wordle attempt
+    Response Format: JSON
+    Example Response: {
+      "message": "Last attempt deleted successfully",
+      "deleted_attempt": "hello"
+    }
+  |}
+    );
+  ]
+
 (* wrapper function to handle errors in route handlers *)
 let with_error_handling handler request_body =
   try handler request_body with
@@ -134,14 +270,43 @@ let router =
 
 let router =
   Router.add router "GET" "/help" (fun body query_params ->
-      Response.response_of 200 "OK"
-        (Headers.t_of "localhost" "text/plain")
-        (Body.t_of_assoc_lst
-           [
-             ( "info",
-               "Use POST requests with JSON body for text processing endpoints"
-             );
-           ]))
+      match Query_params.get "route" query_params with
+      | Some route_name -> (
+          (* Try to find the specific route *)
+          match List.assoc_opt route_name route_details with
+          | Some details ->
+              Response.response_of 200 "OK"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst
+                   [ ("route", "/" ^ route_name); ("details", details) ])
+          | None ->
+              Response.response_of 404 "Not Found"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst
+                   [
+                     ("error", "Route not found");
+                     ("message", "The specified route does not exist");
+                     ( "available_routes",
+                       String.concat ", "
+                         (List.map
+                            (fun r -> "/" ^ r)
+                            (List.map fst route_details)) );
+                   ]))
+      | None ->
+          (* Return list of all available routes *)
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [
+                 ( "message",
+                   "Use the 'route' query parameter to get detailed \
+                    information about a specific route" );
+                 ("example", "/help?route=hello");
+                 ( "available_routes",
+                   String.concat ", "
+                     (List.map (fun r -> "/" ^ r) (List.map fst route_details))
+                 );
+               ]))
 
 (* Text transformation routes with safe lookup *)
 let router =
@@ -287,10 +452,7 @@ let handle_request request =
   let path = Request.url request in
   let method_str = Request.request_method request in
   let body = Request.body request in
-  let response = Router.get_response router method_str path body in
-  Printf.printf "\nDEBUG Response:\n%s\n%!"
-    (Response.string_of_response response);
-  response
+  Router.get_response router method_str path body
 
 let rec run_local_mode () : unit Lwt.t =
   Printf.printf "\n> Enter request line (e.g. GET /hello): ";
