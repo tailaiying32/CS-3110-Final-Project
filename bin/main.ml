@@ -457,7 +457,7 @@ let db = ref (CsvDb.create "data/database.csv")
 
 (* csv database routes *)
 let router =
-  Router.add router "GET" "/db/all" (fun _ ->
+  Router.add router "GET" "/db/all" (fun _ query_params ->
       let records = CsvDb.get_all !db in
       Response.response_of 200 "OK"
         (Headers.t_of "localhost" "application/json")
@@ -467,7 +467,7 @@ let router =
            ]))
 
 let router =
-  Router.add router "POST" "/db/query" (fun body ->
+  Router.add router "POST" "/db/query" (fun body query_params ->
       match (Body.safe_lookup "field" body, Body.safe_lookup "value" body) with
       | Some field, Some value ->
           let query = [ (field, value) ] in
@@ -483,7 +483,7 @@ let router =
                [ ("error", "Missing 'field' or 'value' parameter") ]))
 
 let router =
-  Router.add router "GET" "/db/id" (fun body ->
+  Router.add router "GET" "/db/id" (fun body query_params ->
       match Body.safe_lookup "id" body with
       | Some id -> (
           match CsvDb.get_by_id !db id with
@@ -503,7 +503,7 @@ let router =
             (Body.t_of_assoc_lst [ ("error", "Missing 'id' parameter") ]))
 
 let router =
-  Router.add router "POST" "/db/add" (fun body ->
+  Router.add router "POST" "/db/add" (fun body query_params ->
       match (Body.safe_lookup "name" body, Body.safe_lookup "netid" body) with
       | Some name, Some netid ->
           let record = [ ("name", name); ("netid", netid) ] in
@@ -518,7 +518,7 @@ let router =
                [ ("error", "Missing 'name' or 'netid' parameter") ]))
 
 let router =
-  Router.add router "DELETE" "/db/id" (fun body ->
+  Router.add router "DELETE" "/db/id" (fun body query_params ->
       match Body.safe_lookup "id" body with
       | Some id ->
           let deleted = CsvDb.delete !db id in
@@ -531,7 +531,7 @@ let router =
             (Body.t_of_assoc_lst [ ("error", "Missing 'id' parameter") ]))
 
 let router =
-  Router.add router "DELETE" "/db/query" (fun body ->
+  Router.add router "DELETE" "/db/query" (fun body query_params ->
       match (Body.safe_lookup "field" body, Body.safe_lookup "netid" body) with
       | Some field, Some value ->
           let query = [ (field, value) ] in
@@ -623,7 +623,6 @@ let () =
   print_endline "  POST /db/add - Add a new record with name and netid";
   print_endline "  DELETE /db/id - Delete a record by ID";
   print_endline "  DELETE /db/query - Delete records matching a field value";
-  print_newline ();
   print_newline ();
 
   let server_thread = TcpServer.start server handle_request in

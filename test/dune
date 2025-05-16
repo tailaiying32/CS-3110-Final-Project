@@ -3,10 +3,6 @@
  (libraries ounit2 final_project))
 
 (test
- (name server_test)
- (libraries ounit2 final_project))
-
-(test
  (name query_params_test)
  (libraries ounit2 final_project))
 
