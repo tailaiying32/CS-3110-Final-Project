@@ -1,3 +1,675 @@
+commit b05828700c809d9637e7ae7427e3ca292a30aa4a
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Fri May 16 04:38:09 2025 -0400
+
+    Update demo video URL
+
+commit f19b1d60a9cbc61d79016d02ae652b4048ae80c7
+Merge: d084169 d03786e
+Author: deniz421s <deniz.sanchez421@gmail.com>
+Date:   Thu May 15 23:20:56 2025 -0400
+
+    Merge pull request #14 from tailaiying32/deniz-log
+    
+    updated project description in YAML file.
+
+commit d03786ea6fba8128bf6bc3239fbc3b06d5bc59ba
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Thu May 15 23:17:26 2025 -0400
+
+    updated project description in YAML file.
+
+commit d08416960e83e6a990c53b3dbe9242405cd80400
+Merge: 39a448e 3f65e02
+Author: deniz421s <deniz.sanchez421@gmail.com>
+Date:   Thu May 15 23:09:36 2025 -0400
+
+    Merge pull request #13 from tailaiying32/deniz-log
+    
+     expanded local mode to support post and delete request
+
+commit 3f65e02c1d82a28e83d1af2b5295bdce8b6a0a7c
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Thu May 15 22:59:03 2025 -0400
+
+     expanded local mode to support post and delete request
+
+commit 39a448ede91444ce779ec8575bc983c70087e99c
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Thu May 15 20:16:55 2025 -0400
+
+    - Adjusted the database routes in main.ml to work with the changed route_handler
+    
+    - fixed duplicate server_test that got created during merging branches for whatever reason
+
+commit 1196e2b2f194b8ae89191c50ab311e0b9f2179c3
+Merge: ca6d714 6122a8a
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Thu May 15 20:10:32 2025 -0400
+
+    merge csv_databse into main
+
+commit ca6d714512659e705643bf29243187cf238497d9
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Thu May 15 20:07:03 2025 -0400
+
+    fixed typo?
+
+commit 6122a8a116f6cdb9be1b80a0c7bd64b34ad405a3
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Thu May 15 20:04:52 2025 -0400
+
+    Implemented database (only name and netid)
+    
+     - added csv_database.ml and csv_database.mli
+     - added routes in main.ml to test adding, deleting, and querying from database
+    
+    - added database_test.ml to test csv_database.ml
+
+commit 0ae38e7be6b7d423cc651b00ab1f1f0549125ff3
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:46:02 2025 -0400
+
+    Refactor QueryParams references to camelCase in router and tests
+
+commit f2d785b6c0140c1ed91f25d8fdcda4935a6a5b55
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:45:13 2025 -0400
+
+    Rename tcp_server to camelCase
+
+commit 383ee3196cf38feeb23d3712437ba4d417350e64
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:45:04 2025 -0400
+
+    Rename QueryParams to camelCase
+
+commit 6527eabb6e0f8b7051b428a00b3bbd0c3d9ec017
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:40:25 2025 -0400
+
+    Update INSTALL.md to include 'uri' library in OPAM installation instructions
+
+commit 6794eb706a380d9a6c2f21359e57d0df75693e0b
+Merge: 188a622 fd87c48
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:39:13 2025 -0400
+
+    Merge pull request #11 from tailaiying32/lucas/query-params
+
+commit fd87c48b0e5e38cb428654b026fc95e2dfe88495
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:37:24 2025 -0400
+
+    Add detailed route descriptions to the router
+    
+    - Introduced a comprehensive list of route details, including method types, descriptions, request/response formats, and example payloads for each route.
+    - Enhanced the `/help` endpoint to return specific route information based on the `route` query parameter, improving usability and documentation for API consumers.
+    - Ensured that the response format for the `/help` endpoint is consistent and informative, providing a clear overview of available routes.
+
+commit 1bf2bcf9f0cb43d8593abc062f5e15b1de0c3292
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:33:17 2025 -0400
+
+    Update router to accept query parameters in all route handlers
+    
+    - Modified all route handlers to include `query_params` in their signatures.
+    - Updated response headers for the `/hello`, `/time`, `/cs3110`, `/random`, `/server-status`, `/help`, and text transformation routes to use `application/json` where applicable.
+    - Ensured consistency across DELETE endpoints for Wordle to handle query parameters.
+
+commit 29fff8909c1e4c6b9bbe0503c11a0dc26c8cb798
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 19:33:08 2025 -0400
+
+    Fix response handling
+
+commit e64dbc7195804d4b645aad6532be95fe42340eb3
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 18:56:19 2025 -0400
+
+    Add unit tests for query parameters functionality
+    
+    - Introduced a new test suite for the Query_params module.
+    - Added tests for parsing query strings, retrieving values, and converting parameters to string format.
+    - Ensured coverage for edge cases, including empty parameters and malformed input.
+
+commit e3cab0bb2e45af5c3471ec147d16372f6dd6060b
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 18:56:06 2025 -0400
+
+    Refactor router tests to handle query parameters and improve response structure
+    
+    - Updated test functions to accept query parameters in their signatures.
+    - Enhanced the router tests to verify correct handling of query parameters and responses without them.
+    - Adjusted response headers to include appropriate content types and lengths.
+
+commit e11023ae9745d7168ba4be06264ac697eff39a56
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 18:52:59 2025 -0400
+
+    Update headers.ml to include Content-Length in string representation of headers
+
+commit e30c7da914742edef134ffff623b92670242961b
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 18:52:47 2025 -0400
+
+    Update dune file to include 'uri' library in dependencies
+
+commit 1f64d0df1488931d3404d2c9aa0366701ab471e6
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 18:51:28 2025 -0400
+
+    Update router to handle query parameters
+    
+    - Modified the router type to accept query parameters in the function signature.
+    - Updated the `add` function to reflect the new signature, allowing it to handle both request bodies and query parameters.
+    - Enhanced the `get_response` function to extract and utilize query parameters from the request path.
+
+commit 8487cfb5d949956f342bbe6e66a737a85b40ab64
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Thu May 15 18:51:18 2025 -0400
+
+    Add query parameters module
+    
+    - Introduced a new module for handling query parameters, including functions to parse query strings, retrieve values by key, and convert parameters back to string format.
+    - Added type definitions and documentation for clarity and usability.
+
+commit 188a622af937afb9ad0c36782d997b0fc3743265
+Merge: f14ac79 3c15ef9
+Author: deniz421s <deniz.sanchez421@gmail.com>
+Date:   Thu May 15 14:00:00 2025 -0400
+
+    Merge pull request #10 from tailaiying32/deniz-log
+    
+     added cli interface for server.
+
+commit 3c15ef90aa2692477d9b609ffdd6806888907d5c
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Thu May 15 13:49:54 2025 -0400
+
+     added cli interface for server.
+
+commit f14ac7986c1cdab11751ca91b04d55d93524bad4
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Wed May 14 17:46:56 2025 -0400
+
+    Citations in AUTHORS.md and yojson in INSTALL.md
+
+commit f441e05ef308e7d58ce5f228cb05a87b492726ef
+Merge: e30ba72 042aa7d
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed May 14 03:14:32 2025 -0400
+
+    Merge pull request #9 from tailaiying32/deniz-log
+
+commit 042aa7d81525117de4f990726ca19d13d743f27f
+Author: Deniz Sanchez <ds2472@cornell.edu>
+Date:   Wed May 14 03:11:39 2025 -0400
+
+    add to test suit to improve coverage.
+
+commit e30ba728c0b3287742433611c779b3591ca2810d
+Merge: c3ce62f bbd0172
+Author: Chahnwoo <91393402+Chahnwoo@users.noreply.github.com>
+Date:   Mon May 12 19:31:16 2025 -0400
+
+    Merge pull request #8 from tailaiying32/andrew_20250506
+    
+    Revised Wordle logic to better reflect actual game
+
+commit bbd01725dde2a504d4e564acb665ff96ee7488b9
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Mon May 12 17:46:34 2025 -0400
+
+    Update missing logic from merge
+
+commit 861c70390a0d44407a2ee836c2429e596e567bd2
+Merge: b673467 c3ce62f
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Mon May 12 17:45:11 2025 -0400
+
+    Merge branch "main" with "andrew_20250506"
+
+commit b673467b783ddd8ca991d9c88c9e97d05a82793e
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Mon May 12 16:23:21 2025 -0400
+
+    Revised Wordle logic to better reflect actual game
+
+commit c3ce62f7be09379554f99341a15f63f57990e204
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Sun May 11 01:07:50 2025 -0400
+
+    Implemented graceful error handling so the server doesn't just shut down when something fails
+    
+    -  added a safe lookup function to body.ml and body.mli
+    - added error handling to handle_request
+    - updated all routes to use safe lookup
+    - updated tcp server to handle errors properly in connection handler
+    - refactored main.ml so everything is more organized
+
+commit b36c1d7159b1399103471bab48ef6f6c2255b45a
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Sat May 10 21:44:14 2025 -0400
+
+    Implemented the DELETE endpoint and added calls to reset and remove attempts
+    
+    - added the delete endpoint to tcp_server
+    - added user_attempts, add_attempt, reset_game, delete_last_attempt to wordle
+    - updated
+    terminal route display to indicate which type of request to send
+    - updated the wordle endpoint to track user attempts
+
+commit 44df16c4e761acd6203afa4d3af22aeefdf6ff63
+Author: Tailai Ying <tty6@ornell.edu>
+Date:   Sat May 10 21:20:36 2025 -0400
+
+    Implemented support for additional HTTP methods.
+    
+    - added additional argument in tuple for router.ml
+    - updated routes in main.ml to include http request type
+    - updated router_test.ml to support the http requests
+
+commit 2bf3d33ec46ef0cc979148fb29720eae22062d32
+Merge: 2a16c12 b121646
+Author: Chahnwoo <91393402+Chahnwoo@users.noreply.github.com>
+Date:   Sat May 10 17:10:10 2025 -0400
+
+    Merge pull request #7 from tailaiying32/andrew_20250506
+    
+    Implemented basic wordle
+
+commit b121646d64faaab2bb5f999a0dd024ffb7cae329
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Sat May 10 17:08:58 2025 -0400
+
+    Implemented basic wordle
+
+commit 2a16c12a5e852bfbac290842814d6276ea964947
+Merge: cca377f eaa59b9
+Author: Chahnwoo <91393402+Chahnwoo@users.noreply.github.com>
+Date:   Sat May 10 16:15:18 2025 -0400
+
+    Merge pull request #6 from tailaiying32/andrew_20250506
+    
+    Andrew 20250506
+
+commit eaa59b98b90e35ede4fae74e20bbe7bb5cd35357
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Thu May 8 22:49:39 2025 -0400
+
+    Documented sources used
+
+commit 16e5fb5d82046dcb86cdce3f71c40ba9beacae7c
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Thu May 8 22:49:16 2025 -0400
+
+    Documented resources used
+
+commit b91bad25ffc8c0b45e348fed4e11da4d24bddd3a
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Thu May 8 22:47:00 2025 -0400
+
+    Commented where revisions were made
+
+commit 85aa0c24e19e1ed22b7a2a35ecd20ea27cb57643
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Thu May 8 22:44:47 2025 -0400
+
+    Implemented JSON processing to server
+    
+    - Implemented JSON raw data body extraction in json compilation unit
+    - Instead of only looking at header, server now handles non-empty body
+      contents
+
+commit c0e7140f5b2af4657f0e7084e55bf8114d9d312a
+Author: Andrew C Park <a_park21@outlook.com>
+Date:   Tue May 6 04:48:35 2025 -0400
+
+    Implemented spell-check functionality
+    
+    - Brought over code from my A3
+    - Modified typing of routes to accept body as input
+    - Modified spell-check logic to include suggestions for anagrams
+    - Added route
+
+commit cca377f633a00cee08a5adbe6e00f54a20d9ef40
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 22:56:24 2025 -0400
+
+    Refactor expected string format in router_test.ml
+    
+    - Updated the expected string format for the router response to use standard HTTP header formatting with CRLF line endings.
+
+commit 1ed37d9562814e32a3fecdd5708790cd1db79661
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 22:51:43 2025 -0400
+
+    Update write_response call in server_test.ml to include duration parameter
+
+commit 6a7075137b32990758fdaa3de4d7182ce9c9b68a
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 22:51:35 2025 -0400
+
+    Enhance response logging in tcp_server.ml
+    
+    - Updated the `write_response` function to include the request duration in milliseconds for better performance tracking.
+    - Modified the logging format to display the HTTP method and URL alongside the status code and duration, improving clarity in server logs.
+    - Adjusted the type signature of `write_response` in the interface to accommodate the new duration parameter.
+
+commit c1217928853093fc8fd228ab7b244977941952dc
+Merge: e558e0f e0c570f
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:54:40 2025 -0400
+
+    Merge pull request #5 from tailaiying32/lucas/tcp
+
+commit e0c570f5111041ed4b8a2ed6f630c35bc3a7afc3
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:51:02 2025 -0400
+
+    Refactor response formatting in response.ml
+    
+    - Updated the `string_of_status` function to follow the standard HTTP response format "HTTP/1.1 {status_code} {status_message}".
+    - Modified the `string_of_response` function to use CRLF line endings for headers and body separation, enhancing compliance with HTTP specifications.
+
+commit c33cc30d1fbb5e4587c63e9613c70d5e9a4d99ac
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:50:55 2025 -0400
+
+    Update header formatting in headers.ml
+    
+    - Changed the output format of the `string_of_t` function to use a more standard HTTP header format.
+    - Improved readability by structuring the output as "Host: {host}\r\nContent-Type: {content_type}".
+
+commit 74699427d962d5bf69daa305c0cd995d736f2c0e
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:50:50 2025 -0400
+
+    Update body.ml to format output as JSON
+    
+    - Modified the `string_of_t` function to generate a JSON-like string representation of the body.
+    - Ensured proper formatting by handling empty cases and removing the trailing comma from the final output.
+
+commit 8c34d720c4aa1e39f169095761162fa212b0032d
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:50:41 2025 -0400
+
+    Refactor request handling in main.ml
+    
+    - Removed the `extract_path` function and replaced it with a direct call to `Request.url` for improved clarity and efficiency in handling incoming requests.
+    - Streamlined the request processing logic to enhance maintainability.
+
+commit 3cd669055fbe328bd7f69b45a3c2b08adb488411
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:46:28 2025 -0400
+
+    Add formatting functions for HTTP methods and status codes
+    
+    - Introduced `format_method` to apply color coding to HTTP method strings.
+    - Added `format_status_code` to format HTTP status codes with appropriate color codes.
+    - Implemented unit tests for both functions to ensure correct formatting behavior across various inputs.
+    - Enhanced the test suite by including these new tests in the response handling category.
+
+commit 64dee11a5d1bb45d0957c3294bf02da441c53d32
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:39:46 2025 -0400
+
+    Remove test for stopping a running server from the server lifecycle tests suite
+
+commit 6bcf077419f35005e4e9db4149c0ac2614cf217c
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 19:01:30 2025 -0400
+
+    Fix header formatting for failing test case
+
+commit 9a4a6fbb855fbbcc26abd93367e9fe098e23f685
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 18:50:36 2025 -0400
+
+    Add unit test for stopping a running server
+    
+    - Implemented a new test to verify the behavior of stopping a server that is currently running.
+    - The test checks that the server transitions to a stopped state and that the server thread finishes cleanly.
+    - Enhanced the server lifecycle test suite by adding this new test case for better coverage of server management scenarios.
+
+commit 924aecbf57cf2d46d5b49fd0739515e428aa43d3
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 18:49:29 2025 -0400
+
+    Refactor server lifecycle tests
+    
+    - Removed redundant server lifecycle test code to streamline the testing process.
+
+commit fa45ae5d7063cf7b89e0dc092598ba98b676db09
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 18:46:34 2025 -0400
+
+    Enhance TCP server connection handling and shutdown process
+
+commit ec836eb746827941df2dd33c723412b52bef3916
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 18:38:45 2025 -0400
+
+    Add unit tests for server lifecycle management and error handling
+    
+    - Implemented tests for server lifecycle, including starting, stopping, and handling invalid configurations.
+    - Enhanced the test suite by adding assertions to verify server state during lifecycle transitions.
+    - Improved organization of server lifecycle tests for better clarity and maintainability.
+
+commit 43eae24276fc3b5b9dc329d86b678cafc74ff4d3
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 18:38:38 2025 -0400
+
+    Refactor TCP server connection handling for improved clarity and error management
+    
+    - Introduced a helper function for safe socket operations to handle errors gracefully.
+    - Extracted connection handling logic into a separate function to clean up the main loop.
+    - Updated the main connection acceptance loop to utilize the new error handling mechanism.
+    - Enhanced server shutdown process to ensure proper closure of sockets.
+
+commit 95fb0415d28037ac7bd21b778685f854477f1c3c
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:58:50 2025 -0400
+
+    Refactor TCP server test suite for improved organization
+    
+    - Introduced separate test groups for server creation, request parsing, request reading, response handling, and server lifecycle management.
+    - Enhanced the test suite structure by flattening the list of tests for better readability and maintainability.
+    - Maintained existing test functionality while improving clarity and organization of test cases.
+
+commit e428b7597ff1dce5f2cc0d9d244a767f215bcb05
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:56:45 2025 -0400
+
+    Add unit test for write_response function in TCP server
+    
+    - Implemented a test to verify that the write_response function correctly sends the expected response payload.
+    - Introduced helper functions for socket pair creation and reading from the socket to facilitate testing.
+    - Enhanced the test suite with the new test case for better coverage of response handling scenarios.
+
+commit 69002c84093367c4b62bb568b606957ae6272b16
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:55:47 2025 -0400
+
+    Expose write_response function through tcp_server.mli for testing responses
+
+commit 66d0535841a646cf33b154b5202ef8e53964f8a8
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:53:46 2025 -0400
+
+    Add unit tests for POST requests and various read_request scenarios
+    
+    - Implemented tests for parsing POST requests to verify method and URL extraction.
+    - Added tests for reading requests in single and multiple chunks, handling EOF, and partial reads.
+    - Enhanced the test suite for better coverage of request handling scenarios.
+
+commit c9738007f73268c245714ca9eb6c8b4c5f324999
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:53:34 2025 -0400
+
+    Refactor read_request function in tcp_server to simplify request reading
+    
+    - Updated the read_request function to use the buffer's length for reading.
+    - Streamlined the logic for checking the end of headers by removing unnecessary conditions.
+    - Removed the timeout mechanism to enhance readability and focus on request processing.
+
+commit d9d9bf879f6c2e99904a146446d77a2bcb97b653
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:53:23 2025 -0400
+
+    Expose read_request function through tcp_server.mli
+
+commit ec799a640f662e30f076f6a04f84a0c7569aa868
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:38:50 2025 -0400
+
+    Add unit tests for malformed, empty, and incomplete HTTP requests
+
+commit 202b612d2ad285ba4dd24e24aacaebf1383d8307
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:38:24 2025 -0400
+
+    Refactor parse_request function in tcp_server to simplify request extraction
+    
+    - Streamlined the logic for extracting the HTTP method and path from the request string.
+    - Removed unnecessary pattern matching and improved readability by directly accessing the first line of the request.
+
+commit 4abf0dd5032c7f04705405967a234789302a7f07
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:27:39 2025 -0400
+
+    Add TCP server tests for creation, request parsing, and lifecycle management
+    
+    - Implemented unit tests for server creation, ensuring configuration parameters are correctly set.
+    - Added a test for parsing HTTP requests to verify method and URL extraction.
+    - Created a lifecycle test to validate server startup and shutdown processes, including handling of asynchronous operations with Lwt.
+    - Organized tests into a dedicated TCP Server Test Suite for better structure and clarity.
+
+commit 0160e92eaa33846486ed82b533dc0eba26249d68
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:27:24 2025 -0400
+
+    Enhance error handling in tcp_server by adding Lwt.catch for socket operations
+    
+    - Wrapped socket binding and accepting in Lwt.catch to handle exceptions gracefully.
+    - Ensured client sockets are closed properly in case of errors during request processing.
+    - Improved server shutdown process to handle potential Unix errors when closing the socket.
+
+commit 1aa4e386da7143bf7fb27d30b7834f50c7154282
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Wed Apr 16 17:27:15 2025 -0400
+
+    Expose parse_request function through tcp_server.mli
+
+commit 0b89c45ae8ea2a7f979bfa01cfdb073fe78bb172
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:46:31 2025 -0400
+
+    Update .gitignore to include _coverage directory
+
+commit 7661c63ba161b142bce0aa64c4545f7113c936a4
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:45:54 2025 -0400
+
+    Update lib/dune to include bisect_ppx for instrumentation
+
+commit 4808b96da9c406b5559a5f369c43ac07526adfcb
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:44:26 2025 -0400
+
+    Refactor request reading in tcp_server to improve header parsing and add timeout
+    
+    - Updated the read_request function to check for the end of headers using double newline detection.
+    - Introduced a timeout mechanism to prevent hanging during request reading.
+
+commit 9c6690db85fd88e725f783d6bb128ce90e0dab55
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:38:43 2025 -0400
+
+    Add request parsing and logging features to tcp_server
+    
+    - Introduced functions to format HTTP methods and status codes with colorized output for better visibility in logs.
+    - Implemented a simplified request parsing function to extract method and path from incoming requests.
+    - Updated the write_response function to log outgoing responses along with their status codes.
+    - Enhanced the accept loop to log incoming requests with colorized method representation.
+
+commit 359a6867d1e190256798681af9bde269b826f7c6
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:38:35 2025 -0400
+
+    Update lib/dune file to include ANSITerminal library
+
+commit d8472845019d41954cb1b035a63104522df1f409
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:34:35 2025 -0400
+
+    Add request accessor functions for enhanced usability
+    
+    - Introduced functions to retrieve request method, URL, headers, and body from the request type.
+    - Updated the request.mli interface to include type signatures and documentation for the new functions.
+
+commit 6ca589107183ab46588473b16b40a0ba21fd4c0e
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:33:58 2025 -0400
+
+    Add response accessor functions for improved usability
+    
+    - Introduced functions to retrieve status code, status message, headers, and body from the response type.
+    - Updated the response.mli interface to include type signatures and documentation for the new functions.
+
+commit 0a254860c95e69739a9138254bb66f2a1571ceff
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:20:19 2025 -0400
+
+    Add request reading and response writing functions to tcp_server
+    
+    - Implemented read_request function to handle incoming client requests asynchronously.
+    - Added write_response function to send responses back to clients.
+    - Updated the accept loop to read requests and send responses using the new functions.
+
+commit 732b8c74512f7379b66ac2625004d490e283ae71
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:18:49 2025 -0400
+
+    Refactor main.ml to streamline router initialization and request handling
+    
+    - Removed redundant input reading and response display functions.
+    - Consolidated router setup for handling "/hello", "/time", and "/cs3110" routes.
+    - Introduced a new function to extract the request path from incoming requests.
+    - Updated the main entry point to start the web server using Lwt for asynchronous handling.
+
+commit 303af2bf79882539c17790ffc3aaa47c1d2648ff
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:18:15 2025 -0400
+
+    Update tcp_server.mli to make stop function asynchronous
+
+commit d2fa8ba34b4dd52475a9139f1a7d6fa066cf080f
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:10:30 2025 -0400
+
+    Add TCP server implementation
+    
+    - Introduced a new TCP server module with functionality to create, start, and stop a server.
+    - Added type definitions for server configuration and server state management.
+    - Implemented asynchronous request handling using Lwt for concurrent connections.
+
+commit 789fe1bd479f69a0718f8878d23e228d8200556a
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:00:10 2025 -0400
+
+    Update INSTALL.md to include lwt_ppx in OPAM package installation
+
+commit 6b89a69c2832bcdc84dda6b0b1ff1137fbe13f33
+Author: Lucas Doell <lmd248@cornell.edu>
+Date:   Tue Apr 15 23:00:02 2025 -0400
+
+    Update dune file to include preprocess and library dependencies
+    
+    - Added lwt_ppx as a preprocessor.
+    - Included lwt.unix library for enhanced functionality.
+
 commit e558e0f257f5c184164b48601859ca5790899e68
 Author: Andrew C Park <a_park21@outlook.com>
 Date:   Fri Mar 28 01:51:29 2025 -0400
