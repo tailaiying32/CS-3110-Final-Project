@@ -554,7 +554,8 @@ let handle_request request =
   Router.get_response router method_str path body
 
 let rec run_local_mode () : unit Lwt.t =
-  Printf.printf "\n> Enter request line (e.g. GET /hello): ";
+  Printf.printf
+    "\n> Enter request line (e.g. GET /hello, POST /reverse, DELETE /db/id): ";
   flush stdout;
   let line = read_line () in
 
@@ -564,35 +565,68 @@ let rec run_local_mode () : unit Lwt.t =
     exit 0);
 
   let parts = String.split_on_char ' ' line in
-  let formatted_request =
-    match parts with
-    | [ method_; path ] ->
-        Printf.sprintf "%s %s HTTP/1.1\r\nHost: localhost\r\n\r\n" method_ path
-    | _ ->
-        Printf.printf "Invalid format. Use: METHOD /path\n";
-        flush stdout;
-        "" (* dummy value, won't be used *)
-  in
 
-  let%lwt () =
-    if formatted_request = "" then Lwt.return_unit
-    else
-      let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-      let sockaddr = Unix.ADDR_INET (Unix.inet_addr_loopback, 8080) in
-      let%lwt () = Lwt_unix.connect sock sockaddr in
-      let%lwt _ =
-        Lwt_unix.write_string sock formatted_request 0
-          (String.length formatted_request)
+  match parts with
+  | [ method_; path ] ->
+      let method_ = String.uppercase_ascii method_ in
+
+      let needs_body = method_ = "POST" || method_ = "DELETE" in
+
+      let%lwt () =
+        if needs_body then (
+          Printf.printf "> Enter JSON body (or press Enter for none): ";
+          flush stdout;
+          let json_body = read_line () in
+          let content_section =
+            if String.length json_body = 0 then ""
+            else
+              let content_length = String.length json_body in
+              Printf.sprintf
+                "Content-Type: application/json\r\nContent-Length: %d\r\n\r\n%s"
+                content_length json_body
+          in
+          let request =
+            Printf.sprintf "%s %s HTTP/1.1\r\nHost: localhost\r\n%s" method_
+              path content_section
+          in
+
+          let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+          let sockaddr = Unix.ADDR_INET (Unix.inet_addr_loopback, 8080) in
+          let%lwt () = Lwt_unix.connect sock sockaddr in
+          let%lwt _ =
+            Lwt_unix.write_string sock request 0 (String.length request)
+          in
+          let buf = Bytes.create 4096 in
+          let%lwt len = Lwt_unix.read sock buf 0 4096 in
+          let resp = Bytes.sub_string buf 0 len in
+          Printf.printf "Response from server:\n%s\n" resp;
+          flush stdout;
+          Lwt.return_unit)
+        else
+          (* GET request — no body *)
+          let request =
+            Printf.sprintf "%s %s HTTP/1.1\r\nHost: localhost\r\n\r\n" method_
+              path
+          in
+          let sock = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+          let sockaddr = Unix.ADDR_INET (Unix.inet_addr_loopback, 8080) in
+          let%lwt () = Lwt_unix.connect sock sockaddr in
+          let%lwt _ =
+            Lwt_unix.write_string sock request 0 (String.length request)
+          in
+          let buf = Bytes.create 4096 in
+          let%lwt len = Lwt_unix.read sock buf 0 4096 in
+          let resp = Bytes.sub_string buf 0 len in
+          Printf.printf "Response from server:\n%s\n" resp;
+          flush stdout;
+          Lwt.return_unit
       in
-      let buf = Bytes.create 4096 in
-      let%lwt len = Lwt_unix.read sock buf 0 4096 in
-      let resp = Bytes.sub_string buf 0 len in
-      Printf.printf "Response from server:\n%s\n" resp;
-      flush stdout;
-      Lwt.return_unit
-  in
 
-  run_local_mode ()
+      run_local_mode ()
+  | _ ->
+      Printf.printf "Invalid format. Use: METHOD /path\n";
+      flush stdout;
+      run_local_mode ()
 
 let () =
   let config =
