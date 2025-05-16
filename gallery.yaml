@@ -24,10 +24,10 @@ git-repo: "https://github.com/tailaiying32/CS-3110-Final-Project"
 demo-video-url: https://youtu.be/1i7t_duUf9c
 # Write a short, attention-grabbing description of your project.
 desc: >
-  Our project is a basic web server. It supports basic request handling for a
-  set of pre-defined requests (TBD). Users will be able to make basic API 
-  requests of text inputs. It will implement basic HTTP protocols and handle
-  HTTP methods with a router.
+Our project is a fully functional HTTP web server built in OCaml, supporting GET, POST, and DELETE requests through a flexible routing system.
+It offers a suite of text-processing endpoints, including uppercasing, reversing, capitalizing, and spell-checking with support for user-defined dictionaries.
+A built-in Wordle game and a self-documenting help endpoint enhance interactivity, while server status metrics provide real-time diagnostics.
 
-  Simple visual support will be provided for inputs, while the format of
-  outputs may vary.
+In addition to its web-facing interface, the server includes a local command-line mode that allows users to simulate HTTP requests directly from the terminal.
+A lightweight CSV-based database supports adding, querying, and deleting records via API calls.
+Designed for extensibility, the server uses Lwt for concurrency and includes comprehensive unit tests to ensure reliability.
