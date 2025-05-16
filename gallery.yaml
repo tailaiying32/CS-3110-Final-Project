@@ -21,7 +21,7 @@ title: "Simple OCaml Server (SOS)"
 
 git-repo: "https://github.com/tailaiying32/CS-3110-Final-Project"
 
-demo-video-url: https://youtu.be/1i7t_duUf9c
+demo-video-url: https://youtu.be/NLgLEF5LsDo
 # Write a short, attention-grabbing description of your project.
 desc: >
 Our project is a fully functional HTTP web server built in OCaml, supporting GET, POST, and DELETE requests through a flexible routing system.
