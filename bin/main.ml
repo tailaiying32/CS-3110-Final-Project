@@ -270,7 +270,7 @@ let router =
 
 let router =
   Router.add router "GET" "/help" (fun body query_params ->
-      match Query_params.get "route" query_params with
+      match QueryParams.get "route" query_params with
       | Some route_name -> (
           (* Try to find the specific route *)
           match List.assoc_opt route_name route_details with
@@ -499,9 +499,9 @@ let rec run_local_mode () : unit Lwt.t =
 
 let () =
   let config =
-    { Tcp_server.port = 8080; host = "localhost"; max_connections = 10 }
+    { TcpServer.port = 8080; host = "localhost"; max_connections = 10 }
   in
-  let server = Tcp_server.create config in
+  let server = TcpServer.create config in
 
   print_endline "Starting web server...";
   print_endline "Available routes:";
@@ -522,7 +522,7 @@ let () =
     "  DELETE /wordle/last-attempt - Remove your most recent Wordle attempt";
   print_newline ();
 
-  let server_thread = Tcp_server.start server handle_request in
+  let server_thread = TcpServer.start server handle_request in
 
   if Array.length Sys.argv > 1 && Sys.argv.(1) = "local" then (
     print_endline "You have succesffuly launched local mode";
