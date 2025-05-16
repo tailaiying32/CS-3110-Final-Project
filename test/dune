@@ -1,7 +1,11 @@
-(test 
-(name router_test)
-(libraries ounit2 final_project))
+(test
+ (name router_test)
+ (libraries ounit2 final_project))
 
-(test 
-(name server_test)
-(libraries ounit2 final_project))
+(test
+ (name database_test)
+ (libraries ounit2 final_project unix))
+
+(test
+ (name server_test)
+ (libraries ounit2 final_project))
