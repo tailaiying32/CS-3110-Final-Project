@@ -447,6 +447,105 @@ let router =
           (Headers.t_of "localhost" "application/json")
           (Body.t_of_assoc_lst [ ("error", error_msg) ]))
 
+(** database routes *)
+module CsvDb = struct
+  include Final_project.Csv_database
+end
+
+(* create a database instance *)
+let db = ref (CsvDb.create "data/database.csv")
+
+(* csv database routes *)
+let router =
+  Router.add router "GET" "/db/all" (fun _ ->
+      let records = CsvDb.get_all !db in
+      Response.response_of 200 "OK"
+        (Headers.t_of "localhost" "application/json")
+        (Body.t_of_assoc_lst
+           [
+             ("records", Printf.sprintf "%d records found" (List.length records));
+           ]))
+
+let router =
+  Router.add router "POST" "/db/query" (fun body ->
+      match (Body.safe_lookup "field" body, Body.safe_lookup "value" body) with
+      | Some field, Some value ->
+          let query = [ (field, value) ] in
+          let matching_records = CsvDb.get_by_query !db query in
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [ ("count", string_of_int (List.length matching_records)) ])
+      | _, _ ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [ ("error", "Missing 'field' or 'value' parameter") ]))
+
+let router =
+  Router.add router "GET" "/db/id" (fun body ->
+      match Body.safe_lookup "id" body with
+      | Some id -> (
+          match CsvDb.get_by_id !db id with
+          | Some record ->
+              let field_count = List.length record in
+              Response.response_of 200 "OK"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst
+                   [ ("found", "true"); ("fields", string_of_int field_count) ])
+          | None ->
+              Response.response_of 404 "Not Found"
+                (Headers.t_of "localhost" "application/json")
+                (Body.t_of_assoc_lst [ ("found", "false") ]))
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'id' parameter") ]))
+
+let router =
+  Router.add router "POST" "/db/add" (fun body ->
+      match (Body.safe_lookup "name" body, Body.safe_lookup "netid" body) with
+      | Some name, Some netid ->
+          let record = [ ("name", name); ("netid", netid) ] in
+          CsvDb.add !db record;
+          Response.response_of 201 "Created"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("success", "true") ])
+      | _, _ ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [ ("error", "Missing 'name' or 'netid' parameter") ]))
+
+let router =
+  Router.add router "DELETE" "/db/id" (fun body ->
+      match Body.safe_lookup "id" body with
+      | Some id ->
+          let deleted = CsvDb.delete !db id in
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("deleted", string_of_bool deleted) ])
+      | None ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst [ ("error", "Missing 'id' parameter") ]))
+
+let router =
+  Router.add router "DELETE" "/db/query" (fun body ->
+      match (Body.safe_lookup "field" body, Body.safe_lookup "netid" body) with
+      | Some field, Some value ->
+          let query = [ (field, value) ] in
+          let deleted_count = CsvDb.delete_by_query !db query in
+          Response.response_of 200 "OK"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [ ("deleted_count", string_of_int deleted_count) ])
+      | _, _ ->
+          Response.response_of 400 "Bad Request"
+            (Headers.t_of "localhost" "application/json")
+            (Body.t_of_assoc_lst
+               [ ("error", "Missing 'field' or 'value' parameter") ]))
+
 let handle_request request =
   requests_handled := !requests_handled + 1;
   let path = Request.url request in
@@ -457,8 +556,6 @@ let handle_request request =
 let rec run_local_mode () : unit Lwt.t =
   Printf.printf "\n> Enter request line (e.g. GET /hello): ";
   flush stdout;
-
-  (* Ensure prompt shows immediately *)
   let line = read_line () in
 
   if line = "exit" then (
@@ -474,7 +571,7 @@ let rec run_local_mode () : unit Lwt.t =
     | _ ->
         Printf.printf "Invalid format. Use: METHOD /path\n";
         flush stdout;
-        "" (* Dummy value, won't be used *)
+        "" (* dummy value, won't be used *)
   in
 
   let%lwt () =
@@ -520,6 +617,13 @@ let () =
   print_endline "  DELETE /wordle/reset - Reset your Wordle game";
   print_endline
     "  DELETE /wordle/last-attempt - Remove your most recent Wordle attempt";
+  print_endline "  GET /db/all - Get count of all records in the database";
+  print_endline "  POST /db/query - Search records by field value";
+  print_endline "  GET /db/id - Get information about a record by ID";
+  print_endline "  POST /db/add - Add a new record with name and netid";
+  print_endline "  DELETE /db/id - Delete a record by ID";
+  print_endline "  DELETE /db/query - Delete records matching a field value";
+  print_newline ();
   print_newline ();
 
   let server_thread = TcpServer.start server handle_request in
